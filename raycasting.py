@@ -94,11 +94,10 @@ class RayCasting:
 
             self.ray_casting_result.append((depth, proj_height, texture, offset))
 
-            # draw walls
-#            colour = [255/(1+depth**5 * 0.00002)] * 3
- #           pg.draw.rect(self.game.screen, colour,
- #           (ray * SCALE, HALF_HEIGHT - proj_height //2, SCALE, proj_height))
-
+            # debug drawing
+            if self.game.map_view:
+                pg.draw.line(self.game.screen, 'yellow', (100 * ox, 100 * oy),
+                (100 * ox + 100 * depth * cos_a, 100 * oy + 100 * depth * sin_a), 2)
 
             ray_angle += DELTA_ANGLE
 
