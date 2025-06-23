@@ -1,4 +1,5 @@
 import math
+import pygame
 
 # game settings
 RES = WIDTH, HEIGHT = 1600, 900

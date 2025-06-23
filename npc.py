@@ -1,10 +1,13 @@
 from sprite_object import *
 from random import randint, random, choice
+from settings import *
+from speechbubble import *
 
 class NPC(AnimatedSprite):
     def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5),
                 scale=0.6, shift=0.38, animation_time=180):
         super().__init__(game, path, pos, scale, shift, animation_time)
+        self.id = "baseNPC"
         self.attack_images = self.get_images(self.path + '/attack')
         self.death_images = self.get_images(self.path + '/death')
         self.idle_images = self.get_images(self.path + '/idle')
@@ -12,6 +15,7 @@ class NPC(AnimatedSprite):
         self.walk_images = self.get_images(self.path+ '/walk')
 
         self.attack_dist = randint(3, 6)
+        self.conversation_dist = 6
         self.speed = 0.03
         self.size = 10
         self.health = 100
@@ -22,6 +26,7 @@ class NPC(AnimatedSprite):
         self.ray_cast_value = False
         self.frame_counter = 0
         self.player_search_trigger = False
+        self.in_conversation = False
 
     def update(self):
         self.check_animation_time()
@@ -41,6 +46,8 @@ class NPC(AnimatedSprite):
             self.y += dy
 
     def movement(self):
+        if self.in_conversation:
+            return
         next_pos = self.game.pathfinding.get_path(self.map_pos, self.game.player.map_pos)
         next_x, next_y = next_pos
         
@@ -57,6 +64,18 @@ class NPC(AnimatedSprite):
             self.game.sound.npc_shot.play()
             if random() < self.accuracy:
                 self.game.player.get_damage(self.attack_damage)
+
+    # def talk(self, message = "Hello there, how are you?"):
+    #     if not self.in_conversation:
+    #         return
+    #     print("in npc.talk()")
+    #     sb = SpeechBubble(self.game, self, message, TEXT_EVENT)
+    #     for event in pygame.event.get():
+    #         if event.type == TEXT_EVENT:
+    #             sb.handle_event(event)
+    #     sb.draw()
+    #     self.game.sound.npc_pain.play()
+
 
     def animate_death(self):
         if not self.alive:
@@ -80,7 +99,13 @@ class NPC(AnimatedSprite):
                 self.health -= self.game.weapon.damage
                 self.check_health()
 
-
+    def check_in_conversation(self):
+        if self.in_conversation:
+            return 
+        if self.ray_cast_value and self.game.player.in_conversation and self.dist < self.conversation_dist:
+            self.game.conversation.add_participant(self)
+            self.in_conversation = True
+        
     def check_health(self):
         if self.health < 1:
             self.alive= False
@@ -90,13 +115,15 @@ class NPC(AnimatedSprite):
         if self.alive:
             self.ray_cast_value = self.ray_cast_player_npc()
             self.check_hit_in_npc()
+            self.check_in_conversation()
             if self.pain:
                 self.animate_pain()
             elif self.ray_cast_value:
                 self.player_search_trigger = True
                 if self.dist < self.attack_dist:
-                    self.animate(self.attack_images)
-                    self.attack()
+                    if not self.in_conversation:
+                        self.animate(self.attack_images)
+                        self.attack()
                 else:
                     self.animate(self.walk_images)
                     self.movement()
@@ -185,6 +212,7 @@ class NPC(AnimatedSprite):
 class SoldierNPC(NPC):
     def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180):
         super().__init__(game, path, pos, scale, shift, animation_time)
+        self.id = "soldier"
 
 
 class CacoDemonNPC(NPC):
