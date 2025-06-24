@@ -1,13 +1,17 @@
+import json
+import threading
 from sprite_object import *
 from random import randint, random, choice
 from settings import *
 from speechbubble import *
+from events import NPC_RESPONSE_EVENT
 
 class NPC(AnimatedSprite):
     def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5),
                 scale=0.6, shift=0.38, animation_time=180):
         super().__init__(game, path, pos, scale, shift, animation_time)
         self.id = "baseNPC"
+        self.backstory = ""
         self.attack_images = self.get_images(self.path + '/attack')
         self.death_images = self.get_images(self.path + '/death')
         self.idle_images = self.get_images(self.path + '/idle')
@@ -27,6 +31,8 @@ class NPC(AnimatedSprite):
         self.frame_counter = 0
         self.player_search_trigger = False
         self.in_conversation = False
+        self.talking = False
+        self.thinking = False
 
     def update(self):
         self.check_animation_time()
@@ -65,16 +71,29 @@ class NPC(AnimatedSprite):
             if random() < self.accuracy:
                 self.game.player.get_damage(self.attack_damage)
 
-    # def talk(self, message = "Hello there, how are you?"):
-    #     if not self.in_conversation:
-    #         return
-    #     print("in npc.talk()")
-    #     sb = SpeechBubble(self.game, self, message, TEXT_EVENT)
-    #     for event in pygame.event.get():
-    #         if event.type == TEXT_EVENT:
-    #             sb.handle_event(event)
-    #     sb.draw()
-    #     self.game.sound.npc_pain.play()
+    def talk(self):
+        if not self.talking and not self.thinking:
+            print(f"{self.id} about to talk!")
+            print(f"{self.game.conversation.conversation_so_far}")
+            self.talking = True
+            self.thinking = True
+            # Start thread to generate NPC response
+            threading.Thread(
+                target=self.prepare_response,
+                args=(self.backstory, self.game.conversation.conversation_so_far.copy()),  # copy to avoid mutation during thread
+                daemon=True
+            ).start()
+            self.game.conversation.talk(self, "...")
+            self.game.sound.npc_pain.play()
+
+    def prepare_response(self, backstory, conversation_history):
+        response = self.game.ai_talker.get_response(backstory, conversation_history)
+        response_json = response["message"]["content"]
+        try:
+            response_text = json.loads(response["message"]["content"])["text"]
+        except:
+            response_text = response_json
+        pg.event.post(pygame.event.Event(NPC_RESPONSE_EVENT, {"text": response_text}))
 
 
     def animate_death(self):
@@ -100,7 +119,10 @@ class NPC(AnimatedSprite):
                 self.check_health()
 
     def check_in_conversation(self):
-        if self.in_conversation:
+        if not self.game.conversation:
+            return
+        if self.in_conversation and self.game.conversation.now_talking.id == self.id and not self.thinking:
+            self.talk()
             return 
         if self.ray_cast_value and self.game.player.in_conversation and self.dist < self.conversation_dist:
             self.game.conversation.add_participant(self)
@@ -213,6 +235,7 @@ class SoldierNPC(NPC):
     def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180):
         super().__init__(game, path, pos, scale, shift, animation_time)
         self.id = "soldier"
+        self.backstory = "My name is Johnny and I was a US Marine back on Earth.  I really dislike being on this base, and want to get home to my family.  I really like ice cream and cricket."
 
 
 class CacoDemonNPC(NPC):

@@ -43,7 +43,7 @@ class Player:
                 self.in_conversation = True
                 print("Starting conversation")
                 self.game.conversation = Conversation(self.game, [self])
-                self.game.conversation.talk(self, "Hi there, this is a conversation!")
+                self.game.conversation.talk(self)
             else:
                 self.in_conversation = False
                 print("Ending conversation")

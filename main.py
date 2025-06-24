@@ -10,6 +10,7 @@ from object_handler import *
 from weapon import *
 from sound import *
 from pathfinding import *
+from talk import *
 
 from events import GLOBAL_EVENT
 
@@ -37,6 +38,7 @@ class Game:
         self.weapon = Weapon(self)
         self.sound = Sound(self)
         self.pathfinding = PathFinding(self)
+        self.ai_talker = Talk()
 
     def update(self):
         self.player.update()
