@@ -72,14 +72,14 @@ class MapRenderer:
         x = self.remap_x(pos.x)
         y = self.remap_y(pos.y)
         pg.draw.circle(self.engine.screen, 'orange', (x,y), 8)
-        x1 = self.remap_x(pos.x + 500 * math.sin(math.radians(self.engine.player.angle)))
-        y1 = self.remap_y(pos.y + 500 * math.cos(math.radians(self.engine.player.angle)))
+        x1 = self.remap_x(pos.x + 500 * math.sin(math.radians(self.engine.player.angle+90)))
+        y1 = self.remap_y(pos.y - 500 * math.cos(math.radians(self.engine.player.angle+90)))
         pg.draw.line(self.engine.screen, 'purple', (x,y), (x1,y1), 4)
         self.draw_fov(x,y)
 
     def draw_fov(self, px, py):
         x, y = self.engine.player.pos
-        angle = self.engine.player.angle 
+        angle = -self.engine.player.angle +90
         sin_a1 = math.sin(math.radians(angle - H_FOV))
         cos_a1 = math.cos(math.radians(angle - H_FOV))
         sin_a2 = math.sin(math.radians(angle + H_FOV))
