@@ -241,6 +241,8 @@ class SoldierNPC(NPC):
 class CacoDemonNPC(NPC):
     def __init__(self, game, path='resources/sprites/npc/caco_demon/0.png', pos=(10.5, 6.5), scale=0.7, shift=0.27, animation_time=250):
         super().__init__(game, path, pos, scale, shift, animation_time)
+        self.id = "cacodemon"
+        self.backstory = "My name is Dwayne and I was born here in Hell.  I am an anarchist, and would like to overthrow the Cyberdemon, but I am quite lazy and do like playing table football."
         self.attack_dist = 1.0
         self.health = 150
         self.attack_damage = 25

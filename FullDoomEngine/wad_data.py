@@ -40,7 +40,21 @@ class WADData:
             lump_index = self.map_index + self.LUMP_INDICES["SEGS"],
             num_bytes=12
         )
+        self.update_data()
         self.reader.close()
+
+    def update_data(self):
+        self.update_segs()
+
+    def update_segs(self):
+        for seg in self.segments:
+            seg.start_vertex = self.vertexes[seg.start_vertex_id]
+            seg.end_vertex = self.vertexes[seg.end_vertex_id]
+            seg.linedef = self.linedefs[seg.linedef_id]
+
+            # convert angles from binary representation to degrees
+            seg.angle = (seg.angle << 16) * 8.38190317e-8
+            seg.angle = seg.angle + 360 if seg.angle < 0 else seg.angle
 
     def get_lump_data(self, reader_func, lump_index, num_bytes, header_length=0):
         lump_info = self.reader.directory[lump_index]
@@ -56,3 +70,4 @@ class WADData:
         for index, lump_info in enumerate(self.reader.directory):
             if lump_name in lump_info.values():
                 return index
+            

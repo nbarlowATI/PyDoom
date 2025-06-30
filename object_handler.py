@@ -16,7 +16,7 @@ class ObjectHandler:
         add_sprite(SpriteObject(game))
         add_sprite(AnimatedSprite(game))
         add_npc(SoldierNPC(game))
-#        add_npc(CacoDemonNPC(game, pos=(10.5, 4.5)))
+        add_npc(CacoDemonNPC(game, pos=(7.5, 14.5)))
 #        add_npc(CyberDemonNPC(game, pos=(9.5, 3.5)))
 
     def update(self):

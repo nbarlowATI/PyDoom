@@ -13,7 +13,7 @@ class Talk:
         pass
 
     def get_response(self, backstory, previous_conversation):
-        user_msg_backstory = {"role": "user", "content": backstory}
+        user_msg_backstory = {"role": "system", "content": backstory}
         user_msg = {"role": "user", "content": f"{previous_conversation}"}
         response = ollama.chat(model=OLLAMA_MODEL, messages = [
             SYSTEM_MSG_GENERAL, user_msg_backstory, user_msg

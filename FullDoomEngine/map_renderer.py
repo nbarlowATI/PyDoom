@@ -41,12 +41,15 @@ class MapRenderer:
         self.draw_player_pos()
         #self.draw_node(node_id=self.engine.bsp.root_node_id)
 
+    def draw_vlines(self, x1, x2, sub_sector_id):
+        colour = self.get_colour(sub_sector_id)
+        pg.draw.line(self.engine.screen, colour, (x1, 0), (x1, HEIGHT), 3)
+        pg.draw.line(self.engine.screen, colour, (x2, 0), (x2, HEIGHT), 3)
+
     def draw_seg(self, seg, sub_sector_id):
         v1 = self.vertexes[seg.start_vertex_id]
         v2 = self.vertexes[seg.end_vertex_id]
         pg.draw.line(self.engine.screen, 'green', v1, v2, 4)
-        pg.display.flip()
-#        pg.time.wait(10)
 
     def draw_bbox(self, bbox, colour):
         x, y = self.remap_x(bbox.left), self.remap_y(bbox.top)
