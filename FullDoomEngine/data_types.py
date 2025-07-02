@@ -19,7 +19,9 @@ class Seg:
     __slots__ += [
         "start_vertex",
         "end_vertex",
-        "linedef"
+        "linedef",
+        "front_sector",
+        "back_sector"
     ]
 
 class SubSector:
@@ -52,3 +54,28 @@ class Linedef:
         'front_sidedef_id',
         'back_sidedef_id'
     ]
+    __slots__ += ["front_sidedef", "back_sidedef"]
+
+class Sector:
+    # 26 bytes
+    __slots__ = [
+        "floor_height",
+        "ceil_height",
+        "floor_texture",
+        "ceil_texture",
+        "light_level",
+        "type",
+        "tag"
+    ]
+
+class Sidedef:
+    # 30 bytes
+    __slots__ = [
+        "x_offset",
+        "y_offset",
+        "upper_texture",
+        "lower_texture",
+        "middle_texture",
+        "sector_id",
+    ]
+    __slots__ += ["sector"]

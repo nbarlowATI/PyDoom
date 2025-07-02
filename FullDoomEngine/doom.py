@@ -5,6 +5,9 @@ from wad_data import WADData
 from map_renderer import MapRenderer
 from player import Player
 from bsp import BSP
+from seg_handler import SegHandler
+from view_renderer import ViewRenderer
+
 from doomsettings import *
 
 class DoomEngine:
@@ -21,9 +24,12 @@ class DoomEngine:
         self.map_renderer = MapRenderer(self)
         self.player = Player(self)
         self.bsp = BSP(self)
+        self.seg_handler = SegHandler(self)
+        self.view_renderer = ViewRenderer(self)
 
     def update(self):
         self.player.update()
+        self.seg_handler.update()
         self.bsp.update()
         self.dt = self.clock.tick()
         pg.display.set_caption(f"{self.clock.get_fps()}")
@@ -32,13 +38,14 @@ class DoomEngine:
     def draw(self):
         pg.display.flip()  # put flip here for debug draw
         self.screen.fill('black')
-        self.map_renderer.draw()
+      #  self.map_renderer.draw()
 #        pg.display.flip()
 
     def check_events(self):
         for e in pg.event.get():
             if e.type == pg.QUIT:
                 self.running = False
+                pg.quit()
 
 
     def run(self):

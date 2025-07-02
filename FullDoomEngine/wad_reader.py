@@ -1,7 +1,7 @@
 import struct
 from pygame.math import Vector2 as vec2
 
-from data_types import Linedef, Node, Seg, SubSector, Thing
+from data_types import Linedef, Node, Sector, Seg, Sidedef, SubSector, Thing
 
 class WADReader:
 
@@ -92,7 +92,35 @@ class WADReader:
         linedef.back_sidedef_id = read_2_bytes(offset+12, byte_format="H")
         return linedef
 
+    def read_sector(self, offset):
+        # 26 bytes = 2h + 2h + 8c +8c + 2Hx3
+        read_2_bytes = self.read_2_bytes
+        read_string = self.read_string
 
+        sector = Sector()
+        sector.floor_height = read_2_bytes(offset, byte_format="h")
+        sector.ceil_height = read_2_bytes(offset+2, byte_format="h")
+        sector.floor_texture = read_string(offset+4, num_bytes=8)
+        sector.ceil_texture = read_string(offset+12, num_bytes=8)
+        sector.light_level = read_2_bytes(offset+20, byte_format="H")
+        sector.type = read_2_bytes(offset+22, byte_format="H")
+        sector.tag = read_2_bytes(offset+24, byte_format="H")
+        return sector
+
+    def read_sidedef(self, offset):
+        # 30 bytes = 2h + 2h + 8c + 8c + 8c + 2H
+        read_2_bytes = self.read_2_bytes
+        read_string = self.read_string
+
+        sidedef = Sidedef()
+        sidedef.x_offset = read_2_bytes(offset, byte_format="h")
+        sidedef.y_offset = read_2_bytes(offset+2, byte_format="h")
+        sidedef.upper_texture = read_string(offset+4, num_bytes=8)
+        sidedef.lower_texture = read_string(offset+12, num_bytes=8)
+        sidedef.middle_texture = read_string(offset+20, num_bytes=8)
+        sidedef.sector_id = read_2_bytes(offset+28, byte_format="H")
+
+        return sidedef
 
     def read_vertex(self, offset):
         # 4 bytes, x and y
