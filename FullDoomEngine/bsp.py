@@ -55,9 +55,6 @@ class BSP:
         x2 = self.angle_to_x(angle2)
         return x1, x2, rw_angle1
 
-
-
-
     def check_bbox(self, bbox):
         a, b = vec2(bbox.left, bbox.bottom), vec2(bbox.left, bbox.top)
         c, d = vec2(bbox.right, bbox.top), vec2(bbox.right, bbox.bottom)
@@ -133,39 +130,17 @@ class BSP:
         dy = self.player.pos.y - node.y_partition
         return dx * node.y_partition - dy * node.x_partition <= 0
 
+    def get_sub_sector_height(self):
+        sub_sector_id = self.root_node_id
+        while not sub_sector_id >= self.SUB_SECTOR_IDENTIFIER:
+            node = self.nodes[sub_sector_id]
 
-# class Node:
-#     def __init__(self, value):
-#         self.value = value
-#         self.left = None
-#         self.right = None
+            is_on_back = self.is_on_back_side(node)
+            if is_on_back:
+                sub_sector_id = self.nodes[sub_sector_id].back_child_id
+            else:
+                sub_sector_id = self.nodes[sub_sector_id].front_child_id
 
-
-# def insert(node, value):
-#     if value < node.value:
-#         if node.left:
-#             insert(node.left, value)
-#         else:
-#             node.left = Node(value)
-#     elif value > node.value:
-#         if node.right:
-#             insert(node.right, value)
-#         else:
-#             node.right = Node(value)
-
-# def traverse(node, player_pos):
-#     if node:
-#         if player_pos <= node.value:
-#             traverse(node.left, player_pos)
-#             print(node.value, end=' ')
-#             traverse(node.right, player_pos)
-#         else:
-#             traverse(node.right, player_pos)
-#             print(node.value, end=' ')
-#             traverse(node.left, player_pos)
-
-
-# if __name__ == "__main__":
-#     root = Node(0)
-#     [insert(root, value) for value in [-15, -8, 6, 12, 20]]
-#     traverse(root, player_pos=4)
+        sub_sector = self.sub_sectors[sub_sector_id - self.SUB_SECTOR_IDENTIFIER]
+        seg = self.segments[sub_sector.first_seg_id]
+        return seg.front_sector.floor_height

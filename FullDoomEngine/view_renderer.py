@@ -21,4 +21,5 @@ class ViewRenderer:
         return self.colours[tex + str_light]
     
     def draw_vline(self, x, y1, y2, tex, light):
-        gfx.vline(self.screen, x, y1, y2, self.get_colour(tex, light))
+        if y1 < y2:
+            gfx.vline(self.screen, x, y1, y2, self.get_colour(tex, light))
