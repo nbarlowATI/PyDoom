@@ -55,6 +55,7 @@ class BSP:
         x2 = self.angle_to_x(angle2)
         return x1, x2, rw_angle1
 
+
     def check_bbox(self, bbox):
         a, b = vec2(bbox.left, bbox.bottom), vec2(bbox.left, bbox.top)
         c, d = vec2(bbox.right, bbox.top), vec2(bbox.right, bbox.bottom)
@@ -69,11 +70,11 @@ class BSP:
                 bbox_sides = [(b,a)]
         elif px > bbox.right:
             if py > bbox.top:
-                bbox_sides = [(c,d), (c,b)]
+                bbox_sides = [(c,b), (d,c)]
             elif py < bbox.bottom:
-                bbox_sides = [(c, d), (a, d)]
+                bbox_sides = [(a, d), (d, c)]
             else:
-                bbox_sides = [(c, d)]
+                bbox_sides = [(d, c)]
         else:
             if py > bbox.top:
                 bbox_sides = [(c,b)]
@@ -106,6 +107,7 @@ class BSP:
                 self.engine.seg_handler.classify_segment(seg, *result)
 #                self.engine.map_renderer.draw_seg(seg, sub_sector_id)
 
+
     def render_bsp_node(self, node_id):
         if not self.is_traverse_bsp:
             return
@@ -128,7 +130,7 @@ class BSP:
     def is_on_back_side(self, node):
         dx = self.player.pos.x - node.x_partition
         dy = self.player.pos.y - node.y_partition
-        return dx * node.y_partition - dy * node.x_partition <= 0
+        return dx * node.dy_partition - dy * node.dx_partition <= 0
 
     def get_sub_sector_height(self):
         sub_sector_id = self.root_node_id
@@ -144,3 +146,4 @@ class BSP:
         sub_sector = self.sub_sectors[sub_sector_id - self.SUB_SECTOR_IDENTIFIER]
         seg = self.segments[sub_sector.first_seg_id]
         return seg.front_sector.floor_height
+    
