@@ -234,15 +234,12 @@ class SegHandler:
                 renderer.draw_vline(x, wy1, wy2, lower_wall_texture, light_level)
                 if lower_clip[x] > wy1:
                     lower_clip[x] = wy1
-                #
                 portal_y2 += portal_y2_step
 
             if b_draw_floor:
-                #
                 fy1 = int(max(draw_wall_y2 + 1, upper_clip[x] + 1))
                 fy2 = lower_clip[x] - 1
                 renderer.draw_vline(x, fy1, fy2, tex_floor_id, light_level)
-                #
                 if lower_clip[x] > draw_wall_y2 + 1:
                     lower_clip[x] = fy1
 
