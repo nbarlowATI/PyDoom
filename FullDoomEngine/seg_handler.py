@@ -12,7 +12,7 @@ class SegHandler:
 
         self.seg = None
         self.rw_angle1 = None
-        
+        self.screen_range: set = None
         self.x_to_angle = self.get_x_to_angle_table()
         self.upper_clip, self.lower_clip = [], []
 
@@ -105,7 +105,7 @@ class SegHandler:
                 fy2 = lower_clip[x] -1 
                 renderer.draw_vline(x, fy1, fy2, floor_texture, light_level)
 
-            wall_y2 += wall_y1_step
+            wall_y1 += wall_y1_step
             wall_y2 += wall_y2_step
 
     def draw_portal_wall_range(self, x1, x2):
