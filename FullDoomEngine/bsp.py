@@ -27,7 +27,6 @@ class BSP:
     def update(self):
         self.is_traverse_bsp = True
         self.render_bsp_node(node_id=self.root_node_id)
-        pass
 
     def add_segment_to_fov(self, vertex1, vertex2):
         angle1 = self.point_to_angle(vertex1)
