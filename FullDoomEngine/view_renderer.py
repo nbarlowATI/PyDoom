@@ -36,7 +36,7 @@ class ViewRenderer:
             color = self.get_colour(tex, light)
             self.draw_column(self.framebuffer, x, y1, y2, color)
 
-    def draw_sprite(self, sprite_name):
+    def draw_sprite(self, sprite_name='SHTGA0'):
         img = self.sprites[sprite_name]
         pos = (H_WIDTH - img.get_width() //2, HEIGHT - img.get_height())
         self.screen.blit(img, pos)
