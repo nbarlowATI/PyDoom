@@ -47,6 +47,7 @@ class WADReader:
             palette.append((r,g,b),)
         return palette
 
+
     def read_patch_map(self, offset):
         # defining how the patch should be drawn inside the texture
         read_2_bytes = self.read_2_bytes
@@ -58,6 +59,7 @@ class WADReader:
         patch_map.step_dir = read_2_bytes(offset + 6, byte_format='H')  # unused
         patch_map.color_map = read_2_bytes(offset + 8, byte_format='H')  # unused
         return patch_map
+
 
     def read_patch_column(self, offset):
         read_1_byte = self.read_1_byte
@@ -172,7 +174,7 @@ class WADReader:
         sector.ceil_height = read_2_bytes(offset+2, byte_format="h")
         sector.floor_texture = read_string(offset+4, num_bytes=8)
         sector.ceil_texture = read_string(offset+12, num_bytes=8)
-        sector.light_level = read_2_bytes(offset+20, byte_format="H")
+        sector.light_level = read_2_bytes(offset+20, byte_format="H") / 255.0
         sector.type = read_2_bytes(offset+22, byte_format="H")
         sector.tag = read_2_bytes(offset+24, byte_format="H")
         return sector
@@ -198,6 +200,7 @@ class WADReader:
         y = self.read_2_bytes(offset+2, 'h')
         return vec2(x,y)
 
+
     def read_texture_map(self, offset):
         read_2_bytes = self.read_2_bytes
         read_4_bytes = self.read_4_bytes
@@ -219,6 +222,7 @@ class WADReader:
             )
         return tex_map   
 
+
     def read_texture_header(self, offset):
         read_4_bytes = self.read_4_bytes
 
@@ -228,8 +232,9 @@ class WADReader:
 
         tex_header.texture_data_offset = []
         for i in range(tex_header.texture_count):
-            tex_header.texture_data_offset.append(read_4_bytes(offset + 4 + i * 4,
-                                                               byte_format='I'))
+            tex_header.texture_data_offset.append(
+                read_4_bytes(offset + 4 + i * 4, byte_format='I')
+            )
         return tex_header
 
 

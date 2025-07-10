@@ -11,7 +11,7 @@ from view_renderer import ViewRenderer
 from doomsettings import *
 
 class DoomEngine:
-    def __init__(self, wad_path="wad/Doom1.wad"):
+    def __init__(self, wad_path="wad/DOOM1.wad"):
         self.wad_path = wad_path
         self.screen = pg.display.set_mode(WIN_RES, pg.SCALED)
         self.framebuffer = pg.surfarray.array3d(self.screen)
@@ -38,7 +38,7 @@ class DoomEngine:
 
     def draw(self):
         pg.surfarray.blit_array(self.screen, self.framebuffer)
-        self.view_renderer.draw_sprite('SHTGA0')
+        self.view_renderer.draw_sprite()
         pg.display.flip()  # put flip here for debug draw
       #  self.screen.fill('black')
       #  self.map_renderer.draw()
