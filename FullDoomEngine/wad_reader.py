@@ -1,7 +1,20 @@
 import struct
 from pygame.math import Vector2 as vec2
 
-from data_types import Linedef, Node, Sector, Seg, Sidedef, SubSector, Thing
+from data_types import (
+    Linedef, 
+    Node, 
+    PatchColumn, 
+    PatchHeader,
+    PatchMap,
+    Sector, 
+    Seg, 
+    Sidedef, 
+    SubSector,
+    TextureHeader,
+    TextureMap,
+    Thing
+)
 
 class WADReader:
 
@@ -22,6 +35,63 @@ class WADReader:
             }
             directory.append(lump_info)
         return directory
+
+    def read_palette(self, offset):
+        # 3 bytes B+B+B
+        read_1_byte = self.read_1_byte
+        palette = []
+        for i in range(256):
+            r = read_1_byte(offset + 3*i + 0)
+            g = read_1_byte(offset + 3*i + 1)
+            b = read_1_byte(offset + 3*i + 2)
+            palette.append((r,g,b),)
+        return palette
+
+    def read_patch_map(self, offset):
+        # defining how the patch should be drawn inside the texture
+        read_2_bytes = self.read_2_bytes
+
+        patch_map = PatchMap()
+        patch_map.x_offset = read_2_bytes(offset + 0, byte_format='h')
+        patch_map.y_offset = read_2_bytes(offset + 2, byte_format='h')
+        patch_map.p_name_index = read_2_bytes(offset + 4, byte_format='H')
+        patch_map.step_dir = read_2_bytes(offset + 6, byte_format='H')  # unused
+        patch_map.color_map = read_2_bytes(offset + 8, byte_format='H')  # unused
+        return patch_map
+
+    def read_patch_column(self, offset):
+        read_1_byte = self.read_1_byte
+
+        patch_column = PatchColumn()
+        patch_column.top_delta = read_1_byte(offset + 0)
+
+        if patch_column.top_delta != 0xFF:
+            patch_column.length = read_1_byte(offset + 1)
+            patch_column.padding_pre = read_1_byte(offset + 2)  # unused
+
+            patch_column.data = []
+            for i in range(patch_column.length):
+                patch_column.data.append(read_1_byte(offset + 3 + i))
+            patch_column.padding_post = read_1_byte(offset + 3 + patch_column.length)  # unused
+
+            return patch_column, offset + 4 + patch_column.length
+
+        return patch_column, offset + 1
+
+    def read_patch_header(self, offset):
+        read_2_bytes = self.read_2_bytes
+        read_4_bytes = self.read_4_bytes
+
+        patch_header = PatchHeader()
+        patch_header.width = read_2_bytes(offset + 0, byte_format='H')
+        patch_header.height = read_2_bytes(offset + 2, byte_format='H')
+        patch_header.left_offset = read_2_bytes(offset + 4, byte_format='h')
+        patch_header.top_offset = read_2_bytes(offset + 6, byte_format='h')
+
+        patch_header.column_offset = []
+        for i in range(patch_header.width):
+            patch_header.column_offset.append(read_4_bytes(offset + 8 + 4 * i, byte_format='I'))
+        return patch_header
 
     def read_thing(self, offset):
         read_2_bytes = self.read_2_bytes
@@ -128,6 +198,41 @@ class WADReader:
         y = self.read_2_bytes(offset+2, 'h')
         return vec2(x,y)
 
+    def read_texture_map(self, offset):
+        read_2_bytes = self.read_2_bytes
+        read_4_bytes = self.read_4_bytes
+        read_string = self.read_string
+
+        tex_map = TextureMap()
+        tex_map.name = read_string(offset + 0, num_bytes=8)
+        tex_map.flags = read_4_bytes(offset + 8, byte_format='I')
+        tex_map.width = read_2_bytes(offset + 12, byte_format='H')
+        tex_map.height = read_2_bytes(offset + 14, byte_format='H')
+        tex_map.column_dir = read_4_bytes(offset + 16, byte_format='I')  # unused
+        tex_map.patch_count = read_2_bytes(offset + 20, byte_format='H')
+
+        tex_map.patch_maps = []
+        for i in range(tex_map.patch_count):
+            tex_map.patch_maps.append(
+                # 10 bytes each
+                self.read_patch_map(offset + 22 + i * 10)
+            )
+        return tex_map   
+
+    def read_texture_header(self, offset):
+        read_4_bytes = self.read_4_bytes
+
+        tex_header = TextureHeader()
+        tex_header.texture_count = read_4_bytes(offset + 0, byte_format='I')
+        tex_header.texture_offset = read_4_bytes(offset + 4, byte_format='I')
+
+        tex_header.texture_data_offset = []
+        for i in range(tex_header.texture_count):
+            tex_header.texture_data_offset.append(read_4_bytes(offset + 4 + i * 4,
+                                                               byte_format='I'))
+        return tex_header
+
+
     def read_header(self):
         return {
             'wad_type': self.read_string(offset=0, num_bytes=4),
@@ -148,7 +253,7 @@ class WADReader:
         return self.read_bytes(offset=offset, num_bytes=4, byte_format=byte_format)[0]
 
 
-    def read_string(self, offset, num_bytes):
+    def read_string(self, offset, num_bytes=8):
         return ''.join(b.decode('ascii') for b in 
                        self.read_bytes(offset, num_bytes, byte_format='c'*num_bytes)
                        if ord(b) != 0).upper()

@@ -79,3 +79,49 @@ class Sidedef:
         "sector_id",
     ]
     __slots__ += ["sector"]
+
+
+class PatchColumn:
+    __slots__ = [
+        'top_delta', #B
+        'length', #B
+        'padding_pre', #B
+        'data', #length * B
+        'padding_post' #B
+    ]
+
+class PatchHeader:
+    __slots__ = [
+        'width',
+        'height',
+        'left_offset',
+        'top_offset',
+        'column_offset'
+    ]
+
+class PatchMap:
+    __slots__ = [
+        'x_offset',
+        'y_offset',
+        'p_name_index',
+        'step_dir',  # unused
+        'color_map',  # unused
+    ]
+
+class TextureHeader:
+    __slots__ = [
+        'texture_count',
+        'texture_offset',
+        'texture_data_offset',
+    ]
+
+class TextureMap:
+    __slots__ = [
+        'name',
+        'flags',
+        'width',
+        'height',
+        'column_dir',  # unused
+        'patch_count',
+        'patch_maps',
+    ]

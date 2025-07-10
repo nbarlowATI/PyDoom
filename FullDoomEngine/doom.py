@@ -13,7 +13,8 @@ from doomsettings import *
 class DoomEngine:
     def __init__(self, wad_path="wad/Doom1.wad"):
         self.wad_path = wad_path
-        self.screen = pg.display.set_mode(WIN_RES)
+        self.screen = pg.display.set_mode(WIN_RES, pg.SCALED)
+        self.framebuffer = pg.surfarray.array3d(self.screen)
         self.clock = pg.time.Clock()
         self.running = True
         self.dt = 1 / 60
@@ -36,8 +37,10 @@ class DoomEngine:
         
 
     def draw(self):
+        pg.surfarray.blit_array(self.screen, self.framebuffer)
+        self.view_renderer.draw_sprite('SHTGA0')
         pg.display.flip()  # put flip here for debug draw
-        self.screen.fill('black')
+      #  self.screen.fill('black')
       #  self.map_renderer.draw()
 #        pg.display.flip()
 
