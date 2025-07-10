@@ -44,8 +44,9 @@ class SegHandler:
         scale = min(self.MAX_SCALE, max(self.MIN_SCALE, scale))
         return scale
 
+
     def draw_solid_wall_range(self, x1, x2):
-        #self.engine.view_renderer.draw_vline(x1, 0, HEIGHT) 
+
         seg=self.seg
         front_sector = seg.front_sector
         line = seg.linedef
@@ -76,6 +77,10 @@ class SegHandler:
         rw_distance = hypoteneuse * math.cos(math.radians(offset_angle))
 
         rw_scale1 = self.scale_from_global_angle(x1, rw_normal_angle, rw_distance)
+
+        if math.isclose(offset_angle % 360, 90, abs_tol=1):
+            rw_scale1 *= 0.01
+
         if x1 < x2:
             scale2 = self.scale_from_global_angle(x2, rw_normal_angle, rw_distance)
             rw_scale_step = (scale2 - rw_scale1) / (x2 - x1)
@@ -130,6 +135,7 @@ class SegHandler:
                 fy2 = lower_clip[x] -1
                 renderer.draw_flat(floor_texture_id, light_level, x, fy1, fy2, world_front_z2)
 
+            rw_scale1 += rw_scale_step
             wall_y1 += wall_y1_step
             wall_y2 += wall_y2_step
 
@@ -317,6 +323,7 @@ class SegHandler:
                 if lower_clip[x] > draw_wall_y2 + 1:
                     lower_clip[x] = fy1
 
+            rw_scale1 += rw_scale_step
             wall_y1 += wall_y1_step
             wall_y2 += wall_y2_step
 
