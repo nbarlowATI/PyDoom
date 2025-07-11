@@ -10,15 +10,39 @@ class Player:
         self.pos = self.thing.pos
         self.angle = self.thing.angle
         self.DIAG_MOVE_CORR = 1/math.sqrt(2)
-        self.height = PLAYER_HEIGHT 
+        self.height = PLAYER_HEIGHT
+        self.view_height = self.height
+        self.size = PLAYER_SIZE
+        self.step_phase = 0
+        self.climbing_or_falling = False
         
 
+    def get_view_height(self):
+        # sinusoid with time as we step
+        oscillation = PLAYER_STEP_AMPLITUDE * math.sin(self.step_phase * PLAYER_STEP_FREQUENCY)
+        self.view_height = self.height + oscillation
+
     def get_height(self):
-        self.height = PLAYER_HEIGHT + self.engine.bsp.get_sub_sector_height()
+        target_height = PLAYER_HEIGHT + self.engine.bsp.get_sub_sector_height()
+        if self.height > target_height:
+            # falling
+            self.climbing_or_falling = True
+            fall_dist = PLAYER_FALL_SPEED * self.engine.dt
+            self.height = max(self.height - fall_dist, target_height)
+        elif self.height < target_height:
+            # climbing
+            self.climbing_or_falling = True
+            climb_dist = PLAYER_CLIMB_SPEED * self.engine.dt
+            self.height = min(self.height + climb_dist, target_height)
+        else:
+            self.height = target_height
+            self.climbing_or_falling = False
 
     def update(self):
         self.get_height()
+        self.get_view_height()
         self.control()
+        self.mouse_control()
         
     def control(self):
         speed = PLAYER_SPEED * self.engine.dt
@@ -42,7 +66,30 @@ class Player:
 
         if inc.x and inc.y:
             inc *= self.DIAG_MOVE_CORR
+        if inc.magnitude() > 0 and not self.climbing_or_falling:
+            self.step_phase += self.engine.dt
 
         inc.rotate_ip(self.angle)
-        self.pos += inc
+        new_pos = self.pos + inc
+        collision_segs = self.engine.bsp.trace_collision(self.pos, new_pos)
+        if len(collision_segs) == 0:
+            self.pos = new_pos
+        else:
+             self.pos = self.slide_along_wall(inc, collision_segs)
 
+    def slide_along_wall(self, movement, collision_segs):
+        pos = self.pos
+        for collision_seg in collision_segs:
+            wall_vec = collision_seg.start_vertex - collision_seg.end_vertex
+            wall_vec_norm = wall_vec / wall_vec.magnitude()
+            dot_product = movement.dot(wall_vec_norm)
+            pos += dot_product * wall_vec_norm
+        return pos
+
+    def mouse_control(self):
+        mx, my = pg.mouse.get_pos()
+        if mx < MOUSE_BORDER_LEFT or mx > MOUSE_BORDER_RIGHT:
+            pg.mouse.set_pos([H_WIDTH, H_HEIGHT])
+        self.rel = pg.mouse.get_rel()[0]
+        self.rel = max(-MOUSE_MAX_REL, min(MOUSE_MAX_REL, self.rel))
+        self.angle -= self.rel * MOUSE_SENSITIVITY * self.engine.dt

@@ -46,7 +46,6 @@ class SegHandler:
 
 
     def draw_solid_wall_range(self, x1, x2):
-
         seg=self.seg
         front_sector = seg.front_sector
         line = seg.linedef
@@ -61,8 +60,8 @@ class SegHandler:
         floor_texture_id = front_sector.floor_texture
         light_level = front_sector.light_level
 
-        world_front_z1 = front_sector.ceil_height - self.player.height
-        world_front_z2 = front_sector.floor_height - self.player.height
+        world_front_z1 = front_sector.ceil_height - self.player.view_height
+        world_front_z2 = front_sector.floor_height - self.player.view_height
 
         # check which parts to render
         b_draw_wall = side.middle_texture != '-'
@@ -91,7 +90,7 @@ class SegHandler:
         wall_texture = self.textures[wall_texture_id]
         if line.flags & self.wad_data.LINEDEF_FLAGS['DONT_PEG_BOTTOM']:
             v_top = front_sector.floor_height + wall_texture.shape[1]
-            middle_tex_alt = v_top - self.player.height
+            middle_tex_alt = v_top - self.player.view_height
         else:
             middle_tex_alt = world_front_z1
         middle_tex_alt += side.y_offset
@@ -157,10 +156,10 @@ class SegHandler:
         light_level = front_sector.light_level
 
         # calculate relative plane heights of front and back sector
-        world_front_z1 = front_sector.ceil_height - self.player.height
-        world_back_z1 = back_sector.ceil_height - self.player.height
-        world_front_z2 = front_sector.floor_height - self.player.height
-        world_back_z2 = back_sector.floor_height - self.player.height
+        world_front_z1 = front_sector.ceil_height - self.player.view_height
+        world_back_z1 = back_sector.ceil_height - self.player.view_height
+        world_front_z2 = front_sector.floor_height - self.player.view_height
+        world_back_z2 = back_sector.floor_height - self.player.view_height
 
         # sky hack
         if front_sector.ceil_texture == back_sector.ceil_texture == self.sky_id:
@@ -210,7 +209,7 @@ class SegHandler:
                 upper_tex_alt = world_front_z1
             else:
                 v_top = back_sector.ceil_height + upper_wall_texture.shape[1]
-                upper_tex_alt = v_top - self.player.height
+                upper_tex_alt = v_top - self.player.view_height
             upper_tex_alt += side.y_offset
 
         if b_draw_lower_wall:

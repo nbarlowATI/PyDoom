@@ -33,8 +33,8 @@ class ViewRenderer:
 
     def draw_vline(self, x, y1, y2, tex, light):
         if y1 < y2:
-            color = self.get_colour(tex, light)
-            self.draw_column(self.framebuffer, x, y1, y2, color)
+            colour = self.get_colour(tex, light)
+            self.draw_column(self.framebuffer, x, y1, y2, colour)
 
     def draw_sprite(self, sprite_name='SHTGA0'):
         img = self.sprites[sprite_name]

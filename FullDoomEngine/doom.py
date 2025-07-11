@@ -15,6 +15,7 @@ class DoomEngine:
         self.wad_path = wad_path
         self.screen = pg.display.set_mode(WIN_RES, pg.SCALED)
         self.framebuffer = pg.surfarray.array3d(self.screen)
+        pg.mouse.set_visible(False)
         self.clock = pg.time.Clock()
         self.running = True
         self.dt = 1 / 60
@@ -46,9 +47,8 @@ class DoomEngine:
 
     def check_events(self):
         for e in pg.event.get():
-            if e.type == pg.QUIT:
+            if e.type == pg.QUIT or (e.type == pg.KEYDOWN and e.key == pg.K_ESCAPE):
                 self.running = False
-                pg.quit()
 
 
     def run(self):

@@ -131,6 +131,11 @@ class BSP:
         dx = self.player.pos.x - node.x_partition
         dy = self.player.pos.y - node.y_partition
         return dx * node.dy_partition - dy * node.dx_partition <= 0
+    
+    def is_point_on_back_side(self, position, node):
+        dx = position.x - node.x_partition
+        dy = position.y - node.y_partition
+        return dx * node.dy_partition - dy * node.dx_partition <= 0
 
     def get_sub_sector_height(self):
         sub_sector_id = self.root_node_id
@@ -147,3 +152,71 @@ class BSP:
         seg = self.segments[sub_sector.first_seg_id]
         return seg.front_sector.floor_height
     
+    ## collision of player with walls
+    def trace_collision(self, start_pos, end_pos):
+        return self._trace_node(self.root_node_id, end_pos)
+    
+    def _trace_node(self, node_id, end_pos):
+        if node_id >= self.SUB_SECTOR_IDENTIFIER:
+            return self._check_subsector(node_id - self.SUB_SECTOR_IDENTIFIER, end_pos)
+
+        node = self.nodes[node_id]
+        side = self.is_point_on_back_side(end_pos, node)
+
+        front = self._trace_node(node.front_child_id, end_pos)
+        back = self._trace_node(node.back_child_id, end_pos)
+
+        return front + back
+
+    # def _trace_node(self, node_id, start, end):
+    #     if node_id >= self.SUB_SECTOR_IDENTIFIER:
+    #         return self._check_subsector(node_id - self.SUB_SECTOR_IDENTIFIER, end)
+
+    #     node = self.nodes[node_id]
+    #     start_side = self.is_point_on_back_side(start, node)
+    #     end_side = self.is_point_on_back_side(end, node)
+
+    #     if start_side == end_side:
+    #         child_id = node.back_child_id if start_side else node.front_child_id
+    #         return self._trace_node(child_id, start, end)
+
+    #     # Movement crosses partition → check both
+    #     hit = self._trace_node(node.front_child_id, start, end)
+    #     if hit:
+    #         return hit
+    #     return self._trace_node(node.back_child_id, start, end)
+    
+    def _check_subsector(self, sub_sector_id, end):
+        sub_sector = self.sub_sectors[sub_sector_id]
+        collisions = []
+        for i in range(sub_sector.seg_count):
+            seg = self.segments[sub_sector.first_seg_id + i]
+            if seg.back_sector is not None: # portal wall
+                continue
+            A = seg.start_vertex
+            B = seg.end_vertex
+            if circle_segment_collision(end, A, B, self.player.size):
+                collisions.append(seg)
+              
+        return collisions
+    
+def circle_segment_collision(P, A, B, radius):
+    # Vector from A to B
+    AB = B - A
+    AP = P - A
+
+    # Project point P onto the segment AB, clamped to the segment
+    ab_squared = AB.x**2 + AB.y**2
+    if ab_squared == 0:
+        # A and B are the same point
+        dist_sq = (P - A).length_squared()
+        return dist_sq <= radius**2
+
+    # Project AP onto AB to find point D on the segment closest to P
+    t = max(0, min(1, (AP.x * AB.x + AP.y * AB.y) / ab_squared))
+    D = A + AB * t  # Closest point on the segment to the circle center
+
+    # Distance from player center to closest point on the segment
+    dist_squared = (P - D).length_squared()
+
+    return dist_squared <= radius**2
