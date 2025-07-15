@@ -11,6 +11,11 @@ class WADData:
         "BLOCKING": 1, "BLOCK_MONSTERS": 2, "TWO_SIDED": 4, "DONT_PEG_TOP": 8, "DONT_PEG_BOTTOM": 16,
         "SECRET": 32, "DONT_DRAW": 128, "MAPPED": 256
     }
+
+    SOUND_EFFECT_NAMES = [
+        "DSDOROPN"
+    ]
+
     def __init__(self, engine, map_name):
         self.reader = WADReader(engine.wad_path)
         self.map_index = self.get_lump_index(lump_name=map_name)
@@ -57,6 +62,8 @@ class WADData:
             lump_index = self.map_index + self.LUMP_INDICES["SECTORS"],
             num_bytes=26
         )
+
+        self.sound_effects = { name: self.get_sound_effect(name)  for name in self.SOUND_EFFECT_NAMES}
 
         self.update_data()
         self.asset_data = AssetData(self)
@@ -115,3 +122,12 @@ class WADData:
             if lump_name in lump_info.values():
                 return index
             
+    def get_sound_effect(self, name):
+        for entry in self.reader.directory:
+            if entry["lump_name"].upper() == name.upper():
+                offset = entry['lump_offset']
+                size = entry["lump_size"]             
+                self.reader.wad_file.seek(offset)
+                return self.reader.wad_file.read(size)
+        raise ValueError(f'Lump {name} not found')
+        

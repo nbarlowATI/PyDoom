@@ -1,7 +1,11 @@
 import math
-from doomsettings import *
+
 from pygame.math import Vector2 as vec2
 import pygame as pg
+
+from doomsettings import *
+from door import Door
+
 
 class Player:
     def __init__(self, engine):
@@ -15,6 +19,7 @@ class Player:
         self.size = PLAYER_SIZE
         self.step_phase = 0
         self.climbing_or_falling = False
+        self.active_door = None
         
 
     def get_view_height(self):
@@ -43,6 +48,8 @@ class Player:
         self.get_view_height()
         self.control()
         self.mouse_control()
+        if self.active_door:
+            self.active_door.update()
         
     def control(self):
         speed = PLAYER_SPEED * self.engine.dt
@@ -80,6 +87,16 @@ class Player:
     def slide_along_wall(self, movement, collision_segs):
         pos = self.pos
         for collision_seg in collision_segs:
+            wall_type = check_segment(collision_seg)
+            if wall_type == WALL_TYPE.PASSABLE:
+                pos += movement
+            elif wall_type == WALL_TYPE.DOOR:
+                if self.active_door and self.active_door.id == collision_seg.linedef_id:
+                    if self.active_door.is_open:
+                        pos+= movement
+                else:
+                    self.active_door = Door(collision_seg, self.engine)
+            print(f"wall type {wall_type}")
             wall_vec = collision_seg.start_vertex - collision_seg.end_vertex
             wall_vec_norm = wall_vec / wall_vec.magnitude()
             dot_product = movement.dot(wall_vec_norm)
@@ -93,3 +110,17 @@ class Player:
         self.rel = pg.mouse.get_rel()[0]
         self.rel = max(-MOUSE_MAX_REL, min(MOUSE_MAX_REL, self.rel))
         self.angle -= self.rel * MOUSE_SENSITIVITY * self.engine.dt
+
+
+def check_segment(segment):
+    if segment.back_sector is None:
+        return WALL_TYPE.SOLID_WALL
+    if segment.linedef.line_type > 0:
+        return WALL_TYPE.DOOR
+    print(f"portal wall back_ceiling {segment.back_sector.ceil_height} back_floor{segment.back_sector.floor_height} front_ceil {segment.front_sector.ceil_height} front_floor {segment.front_sector.floor_height}")
+    if (segment.back_sector.ceil_height - segment.back_sector.floor_height > MIN_ROOM_HEIGHT) and \
+        (segment.front_sector.floor_height - segment.back_sector.floor_height < MAX_STEP_HEIGHT):
+        print("PASSABLE")
+        return WALL_TYPE.PASSABLE
+    print("IMPASSABLE")
+    return WALL_TYPE.IMPASSABLE

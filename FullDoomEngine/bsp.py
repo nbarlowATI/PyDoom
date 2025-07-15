@@ -154,7 +154,11 @@ class BSP:
     
     ## collision of player with walls
     def trace_collision(self, start_pos, end_pos):
-        return self._trace_node(self.root_node_id, end_pos)
+        collisions =  self._trace_node(self.root_node_id, end_pos)
+        for collision in collisions:
+            if collision.linedef.line_type > 0:
+                print(f"NEXT TO DOOR?? {collision.linedef.line_type}")
+        return collisions
     
     def _trace_node(self, node_id, end_pos):
         if node_id >= self.SUB_SECTOR_IDENTIFIER:
@@ -167,32 +171,14 @@ class BSP:
         back = self._trace_node(node.back_child_id, end_pos)
 
         return front + back
-
-    # def _trace_node(self, node_id, start, end):
-    #     if node_id >= self.SUB_SECTOR_IDENTIFIER:
-    #         return self._check_subsector(node_id - self.SUB_SECTOR_IDENTIFIER, end)
-
-    #     node = self.nodes[node_id]
-    #     start_side = self.is_point_on_back_side(start, node)
-    #     end_side = self.is_point_on_back_side(end, node)
-
-    #     if start_side == end_side:
-    #         child_id = node.back_child_id if start_side else node.front_child_id
-    #         return self._trace_node(child_id, start, end)
-
-    #     # Movement crosses partition → check both
-    #     hit = self._trace_node(node.front_child_id, start, end)
-    #     if hit:
-    #         return hit
-    #     return self._trace_node(node.back_child_id, start, end)
     
     def _check_subsector(self, sub_sector_id, end):
         sub_sector = self.sub_sectors[sub_sector_id]
         collisions = []
         for i in range(sub_sector.seg_count):
             seg = self.segments[sub_sector.first_seg_id + i]
-            if seg.back_sector is not None: # portal wall
-                continue
+#            if seg.back_sector is not None: # portal wall
+#                continue
             A = seg.start_vertex
             B = seg.end_vertex
             if circle_segment_collision(end, A, B, self.player.size):

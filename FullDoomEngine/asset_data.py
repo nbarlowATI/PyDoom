@@ -107,6 +107,8 @@ class AssetData:
 
         self.sprites = self.get_sprites(start_marker="S_START", end_marker="S_END")
 
+#        self.doomguy = self.get_doomguy(start_marker="")
+
         # texture patch names
         self.p_names = self.wad_data.get_lump_data(
             self.reader.read_string,
@@ -159,6 +161,16 @@ class AssetData:
             lump['lump_name'] : Patch(self, lump['lump_name']).image for lump in lumps_info
         }
         return sprites
+    
+    def get_doomguy(self, start_marker="STFST01", end_marker="STFDEAD0"):
+        idx1 = self.get_lump_index(start_marker)
+        idx2 = self.get_lump_index(end_marker) + 1
+        lumps_info = self.reader.directory[idx1:idx2]
+        faces = {
+            lump["lump_name"] : Patch(self, lump["lump_name"]).image for lump in lumps_info
+        }
+        return faces
+
     
     def get_flats(self, start_marker='F_START', end_marker='F_END'):
         idx1 = self.get_lump_index(start_marker) + 1

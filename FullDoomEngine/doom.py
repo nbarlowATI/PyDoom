@@ -6,6 +6,7 @@ from map_renderer import MapRenderer
 from player import Player
 from bsp import BSP
 from seg_handler import SegHandler
+from sounds import SoundEffect
 from view_renderer import ViewRenderer
 
 from doomsettings import *
@@ -28,6 +29,8 @@ class DoomEngine:
         self.bsp = BSP(self)
         self.seg_handler = SegHandler(self)
         self.view_renderer = ViewRenderer(self)
+        self.doors = {}
+        self.door_sound = SoundEffect("DSDOROPN", self)
 
     def update(self):
         self.player.update()
@@ -49,6 +52,9 @@ class DoomEngine:
         for e in pg.event.get():
             if e.type == pg.QUIT or (e.type == pg.KEYDOWN and e.key == pg.K_ESCAPE):
                 self.running = False
+            if e.type == pg.KEYDOWN and e.key == pg.K_SPACE:
+                if self.player.active_door:
+                    self.player.active_door.toggle_open()
 
 
     def run(self):

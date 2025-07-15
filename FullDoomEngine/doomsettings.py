@@ -1,3 +1,4 @@
+from enum import Enum
 import math
 
 DOOM_RES = DOOM_W, DOOM_H = 320,200
@@ -26,3 +27,16 @@ MOUSE_SENSITIVITY = 0.03
 MOUSE_MAX_REL = 40
 MOUSE_BORDER_LEFT = 100
 MOUSE_BORDER_RIGHT = WIDTH - MOUSE_BORDER_LEFT
+
+# can we pass through a portal wall?
+MIN_ROOM_HEIGHT = 60
+MAX_STEP_HEIGHT = 20
+
+class WALL_TYPE(Enum):
+    SOLID_WALL = 0
+    DOOR = 1
+    PASSABLE = 2
+    IMPASSABLE = 3
+
+# for sound effects
+SAMPLE_RATE = 11025
