@@ -15,6 +15,8 @@ class ViewRenderer:
         self.asset_data = engine.wad_data.asset_data
         self.palette = self.asset_data.palette
         self.sprites = self.asset_data.sprites
+        self.doomguy = self.asset_data.doomguy_faces
+        self.status_bar = self.asset_data.status_bar
         self.textures = self.asset_data.textures
         self.sky_id = self.asset_data.sky_id
         self.sky_tex = self.asset_data.sky_tex
@@ -36,9 +38,21 @@ class ViewRenderer:
             colour = self.get_colour(tex, light)
             self.draw_column(self.framebuffer, x, y1, y2, colour)
 
-    def draw_sprite(self, sprite_name='SHTGA0'):
+    # draw currently selected weapon at the bottom of the screen, but above status bar.
+    def draw_weapon(self, weapon='2', y_offset=0):
+        sprite_name = WEAPON_SPRITES[weapon]
         img = self.sprites[sprite_name]
+        pos = (H_WIDTH - img.get_width() //2, HEIGHT - img.get_height() - self.status_bar.get_height())
+        self.screen.blit(img, pos)
+
+    def draw_status_bar(self):
+        img = self.status_bar
         pos = (H_WIDTH - img.get_width() //2, HEIGHT - img.get_height())
+        self.screen.blit(img, pos)
+
+    def draw_doomguy(self, sprite_name='STFST00'):
+        img = self.doomguy[sprite_name]
+        pos = (H_WIDTH - img.get_width() //2,HEIGHT - img.get_height() )
         self.screen.blit(img, pos)
 
     def draw_flat(self, tex_id, light_level, x, y1, y2, world_z):

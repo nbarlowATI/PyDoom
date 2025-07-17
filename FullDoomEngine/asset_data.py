@@ -21,7 +21,6 @@ class Patch:
 
             )
 
-
     def get_image(self):
         image = pg.Surface([self.width, self.height])
         image.fill(COLOUR_KEY)
@@ -106,9 +105,8 @@ class AssetData:
         self.palette = self.palettes[self.palette_index]
 
         self.sprites = self.get_sprites(start_marker="S_START", end_marker="S_END")
-
-#        self.doomguy = self.get_doomguy(start_marker="")
-
+        self.status_bar = self.get_status_bar()
+        self.doomguy_faces = self.get_doomguy()
         # texture patch names
         self.p_names = self.wad_data.get_lump_data(
             self.reader.read_string,
@@ -171,6 +169,10 @@ class AssetData:
         }
         return faces
 
+    def get_status_bar(self, name="STBAR"):
+        idx = self.get_lump_index(name)
+        lump_info = self.reader.directory[idx]
+        return Patch(self, lump_info["lump_name"]).image
     
     def get_flats(self, start_marker='F_START', end_marker='F_END'):
         idx1 = self.get_lump_index(start_marker) + 1

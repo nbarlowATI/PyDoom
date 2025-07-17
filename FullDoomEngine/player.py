@@ -1,10 +1,11 @@
 import math
+import random
 
 from pygame.math import Vector2 as vec2
 import pygame as pg
 
 from doomsettings import *
-from door import Door
+#from door import Door
 
 
 class Player:
@@ -20,6 +21,12 @@ class Player:
         self.step_phase = 0
         self.climbing_or_falling = False
         self.active_door = None
+        self.current_weapon = '2'
+        self.selected_weapon = '2'
+        self.lowering_weapon = False
+        self.raising_weapon = False
+        self.health = 100
+        self.face_img = 'STFST00'
         
 
     def get_view_height(self):
@@ -43,6 +50,18 @@ class Player:
             self.height = target_height
             self.climbing_or_falling = False
 
+    def set_face_image(self):
+        if self.health > 80:
+            # select randomly
+            self.face_img = random.choice(
+                [
+                'STFST00', 'STFST01', 'STFTL10',
+                'STFTR10', 'STFOUCH0', 'STFKILL0',
+                'STFEVL0',
+                ]
+            )
+
+
     def update(self):
         self.get_height()
         self.get_view_height()
@@ -51,6 +70,9 @@ class Player:
         if self.active_door:
             self.active_door.update()
         
+    def change_weapon(self):
+        key_state = pg.key.get_pressed()
+
     def control(self):
         speed = PLAYER_SPEED * self.engine.dt
         rot_speed = PLAYER_ROT_SPEED * self.engine.dt
@@ -91,11 +113,11 @@ class Player:
             if wall_type == WALL_TYPE.PASSABLE:
                 pos += movement
             elif wall_type == WALL_TYPE.DOOR:
-                if self.active_door and self.active_door.id == collision_seg.linedef_id:
-                    if self.active_door.is_open:
+#                if self.active_door and self.active_door.id == collision_seg.linedef_id:
+#                    if self.active_door.is_open:
                         pos+= movement
-                else:
-                    self.active_door = Door(collision_seg, self.engine)
+#                else:
+#                    self.active_door = Door(collision_seg, self.engine)
             print(f"wall type {wall_type}")
             wall_vec = collision_seg.start_vertex - collision_seg.end_vertex
             wall_vec_norm = wall_vec / wall_vec.magnitude()
