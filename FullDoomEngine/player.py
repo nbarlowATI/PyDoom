@@ -104,9 +104,14 @@ class Player:
         if len(collision_segs) == 0:
             self.pos = new_pos
         else:
-             self.pos = self.slide_along_wall(inc, collision_segs)
+             self.pos = self.handle_collision(inc, collision_segs)
 
-    def slide_along_wall(self, movement, collision_segs):
+    # This function is called any time the player's movement
+    # would come within some radius of a segment.  Possible outcomes are:
+    # * move as normal, if segment is traversible (e.g. step, or open door)
+    # * no movement, if movement is directly into non-traversible segment
+    # * slide along wall, if movement is at an angle to non-traversible segment.
+    def handle_collision(self, movement, collision_segs):
         pos = self.pos
         for collision_seg in collision_segs:
             wall_type = check_segment(collision_seg)
@@ -137,12 +142,12 @@ class Player:
 def check_segment(segment):
     if segment.back_sector is None:
         return WALL_TYPE.SOLID_WALL
-    if segment.linedef.line_type > 0:
-        return WALL_TYPE.DOOR
-    print(f"portal wall back_ceiling {segment.back_sector.ceil_height} back_floor{segment.back_sector.floor_height} front_ceil {segment.front_sector.ceil_height} front_floor {segment.front_sector.floor_height}")
-    if (segment.back_sector.ceil_height - segment.back_sector.floor_height > MIN_ROOM_HEIGHT) and \
-        (segment.front_sector.floor_height - segment.back_sector.floor_height < MAX_STEP_HEIGHT):
-        print("PASSABLE")
+#    if segment.linedef.line_type == 1:
+#        return WALL_TYPE.DOOR
+    floor_diff = segment.back_sector.floor_height - segment.front_sector.floor_height
+    ceiling_clearance = segment.back_sector.ceil_height - segment.back_sector.floor_height
+    if floor_diff < MAX_STEP_HEIGHT and ceiling_clearance > MIN_ROOM_HEIGHT:
+
+        print(f"middle texture {segment.linedef.back_sidedef.middle_texture}")
         return WALL_TYPE.PASSABLE
-    print("IMPASSABLE")
     return WALL_TYPE.IMPASSABLE
