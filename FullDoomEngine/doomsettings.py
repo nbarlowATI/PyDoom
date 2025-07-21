@@ -34,6 +34,9 @@ MOUSE_BORDER_RIGHT = WIDTH - MOUSE_BORDER_LEFT
 MIN_ROOM_HEIGHT = PLAYER_HEIGHT + 5
 MAX_STEP_HEIGHT = 24
 
+# from how far away can we activate a door?
+ACTIVATION_DIST = 200
+
 class WALL_TYPE(Enum):
     SOLID_WALL = 0
     DOOR = 1
@@ -45,6 +48,6 @@ SAMPLE_RATE = 11025
 
 # sprites
 WEAPON_SPRITES = {
-    '1' : 'PISTA0',
+    '1' : 'PISGA0',
     '2' : 'SHTGA0',
 }

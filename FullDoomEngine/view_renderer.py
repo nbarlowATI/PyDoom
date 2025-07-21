@@ -40,7 +40,6 @@ class ViewRenderer:
 
     # draw currently selected weapon at the bottom of the screen, but above status bar.
     def draw_weapon(self, sprite_name, y_offset=0):
-        sprite_name = WEAPON_SPRITES[weapon]
         img = self.sprites[sprite_name]
         pos = (H_WIDTH - img.get_width() //2, HEIGHT - img.get_height() - self.status_bar.get_height())
         self.screen.blit(img, pos)

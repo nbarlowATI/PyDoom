@@ -155,9 +155,6 @@ class BSP:
     ## collision of player with walls
     def trace_collision(self, start_pos, end_pos):
         collisions =  self._trace_node(self.root_node_id, end_pos)
-        for collision in collisions:
-            if collision.linedef.line_type > 0:
-                print(f"NEXT TO DOOR?? {collision.linedef.line_type}")
         return collisions
     
     def _trace_node(self, node_id, end_pos):

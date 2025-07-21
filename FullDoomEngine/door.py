@@ -1,14 +1,18 @@
+from sounds import SoundEffect
+
 class Door:
     def __init__(self, segment, engine):
+        self.engine = engine
         self.segment = segment
         self.id = segment.linedef_id
         self.is_opening = False
         self.is_closing = False
         self.is_open = False
         self.is_closed = True
-        self.sound_effect = engine.door_sound
+        self.sound_effect = SoundEffect("DSDOROPN", self.engine)
         self.target_height = self.segment.front_sector.ceil_height
         self.open_speed = 30
+        print(f"creating a door!!! {self.id}")
         
 
     def toggle_open(self):
@@ -16,7 +20,7 @@ class Door:
             self.is_closing = True
         else:
             self.is_opening = True
-
+            self.engine.doors
         self.sound_effect.play()
 
 
@@ -25,6 +29,8 @@ class Door:
             if self.segment.back_sector.ceil_height == self.target_height:
                 print("DOOR OPEN!")
                 self.is_opening = False
+                self.is_open = True
+                self.is_closed = False
             else:
                 self.segment.back_sector.ceil_height = min(
                     self.target_height,

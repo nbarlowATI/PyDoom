@@ -5,8 +5,9 @@ from wad_data import WADData
 from map_renderer import MapRenderer
 from player import Player
 from bsp import BSP
+from raycasting import RayCasting
 from seg_handler import SegHandler
-#from sounds import SoundEffect
+from sounds import SoundEffect
 from view_renderer import ViewRenderer
 
 from events import *
@@ -28,10 +29,10 @@ class DoomEngine:
         self.map_renderer = MapRenderer(self)
         self.player = Player(self)
         self.bsp = BSP(self)
+        self.raycaster = RayCasting(self)
         self.seg_handler = SegHandler(self)
         self.view_renderer = ViewRenderer(self)
         self.doors = {}
-#        self.door_sound = SoundEffect("DSDOROPN", self)
         # set timer to change doomguy face every 2s
         pg.time.set_timer(DOOMGUY_FACE_CHANGE_EVENT, 2000)
 
@@ -39,6 +40,8 @@ class DoomEngine:
         self.player.update()
         self.seg_handler.update()
         self.bsp.update()
+        for door in self.doors.values():
+            door.update()
         self.dt = self.clock.tick()
         pg.display.set_caption(f"{self.clock.get_fps()}")
         
@@ -58,8 +61,9 @@ class DoomEngine:
             if e.type == pg.QUIT or (e.type == pg.KEYDOWN and e.key == pg.K_ESCAPE):
                 self.running = False
             if e.type == pg.KEYDOWN and e.key == pg.K_SPACE:
-                if self.player.active_door:
-                    self.player.active_door.toggle_open()
+                self.player.handle_action()
+#                if self.player.active_door:
+#                    self.player.active_door.toggle_open()
             if e.type == DOOMGUY_FACE_CHANGE_EVENT:
                 self.player.set_face_image()
 

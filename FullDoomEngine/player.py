@@ -5,6 +5,7 @@ from pygame.math import Vector2 as vec2
 import pygame as pg
 
 from doomsettings import *
+from data_types import Seg
 #from door import Door
 
 
@@ -21,8 +22,8 @@ class Player:
         self.step_phase = 0
         self.climbing_or_falling = False
         self.active_door = None
-        self.current_weapon = '2'
-        self.selected_weapon = '2'
+        self.current_weapon = 'PISGA0'
+        self.selected_weapon = 'PISGA0'
         self.lowering_weapon = False
         self.raising_weapon = False
         self.health = 100
@@ -117,17 +118,26 @@ class Player:
             wall_type = check_segment(collision_seg)
             if wall_type == WALL_TYPE.PASSABLE:
                 pos += movement
+                print(f"passable wall {pos} {movement}")
             elif wall_type == WALL_TYPE.DOOR:
-#                if self.active_door and self.active_door.id == collision_seg.linedef_id:
-#                    if self.active_door.is_open:
-                        pos+= movement
-#                else:
-#                    self.active_door = Door(collision_seg, self.engine)
-            print(f"wall type {wall_type}")
-            wall_vec = collision_seg.start_vertex - collision_seg.end_vertex
-            wall_vec_norm = wall_vec / wall_vec.magnitude()
-            dot_product = movement.dot(wall_vec_norm)
-            pos += dot_product * wall_vec_norm
+                if collision_seg.linedef_id in self.engine.doors:
+                    door = self.engine.doors[collision_seg.linedef_id]
+                    print(f"door open? {door.is_open} {door.is_opening} {door.is_closed} {door.is_closing}")
+                    if door.is_open or door.is_opening:
+                        # door is open
+                        pos += movement
+                        print(f"can move through door {pos} {movement}")
+            elif wall_type == WALL_TYPE.SOLID_WALL:
+                wall_vec = collision_seg.start_vertex - collision_seg.end_vertex
+                wall_vec_norm = wall_vec / wall_vec.magnitude()
+                dot_product = movement.dot(wall_vec_norm)
+                pos += dot_product * wall_vec_norm
+                print("solid wall")
+            elif wall_type == WALL_TYPE.IMPASSABLE:
+                # likely a passable wall behind - just break out of the loop
+                # rather than trying to figure out how to slide.
+                print("impassable wall")
+                break
         return pos
 
     def mouse_control(self):
@@ -139,15 +149,29 @@ class Player:
         self.angle -= self.rel * MOUSE_SENSITIVITY * self.engine.dt
 
 
+    def handle_action(self):
+        """
+        Called when the action button (space bar) is pressed.
+        Send a raycast to see if there are any doors or similar ahead.
+        """
+        seg = self.engine.raycaster.find_activatable_surface()
+        if seg is None or not(isinstance(seg, Seg)):
+            return
+        if check_segment(seg) == WALL_TYPE.DOOR and seg.linedef_id in self.engine.doors:
+            self.engine.doors[seg.linedef_id].toggle_open()
+
 def check_segment(segment):
     if segment.back_sector is None:
         return WALL_TYPE.SOLID_WALL
-#    if segment.linedef.line_type == 1:
-#        return WALL_TYPE.DOOR
+    if segment.linedef.line_type == 1:
+        return WALL_TYPE.DOOR
+    if segment.linedef.flags > 0:
+        pass
     floor_diff = segment.back_sector.floor_height - segment.front_sector.floor_height
     ceiling_clearance = segment.back_sector.ceil_height - segment.back_sector.floor_height
+ #   print(f"step {floor_diff} clearance {ceiling_clearance}")
     if floor_diff < MAX_STEP_HEIGHT and ceiling_clearance > MIN_ROOM_HEIGHT:
 
-        print(f"middle texture {segment.linedef.back_sidedef.middle_texture}")
+  #      print(f"middle texture {segment.linedef.back_sidedef.middle_texture}")
         return WALL_TYPE.PASSABLE
     return WALL_TYPE.IMPASSABLE
