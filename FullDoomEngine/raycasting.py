@@ -54,9 +54,10 @@ class RayCasting:
         if hit:
             print(f"got a hit!!! {hit} {hit.linedef.line_type}")
             if isinstance(hit, Seg) and hit.linedef.line_type == 1:
-#            if isinstance(hit, Seg) and hit.linedef.flags == 12:
                 if not hit.linedef_id in self.engine.doors:
-                    self.engine.doors[hit.linedef_id] = Door(hit, self.engine)
+                    new_door = Door(hit, self.engine)
+                    self.engine.doors[hit.linedef_id] = new_door
+                    self.engine.doors[hit.linedef_id+1] = new_door
             return hit
         return None
         

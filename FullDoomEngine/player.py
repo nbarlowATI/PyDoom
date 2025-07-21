@@ -116,6 +116,7 @@ class Player:
         pos = self.pos
         for collision_seg in collision_segs:
             wall_type = check_segment(collision_seg)
+            print(f"wall type {wall_type}")
             if wall_type == WALL_TYPE.PASSABLE:
                 pos += movement
                 print(f"passable wall {pos} {movement}")
@@ -127,6 +128,9 @@ class Player:
                         # door is open
                         pos += movement
                         print(f"can move through door {pos} {movement}")
+                        return pos
+                else:
+                    print(f"known doors {self.engine.doors.keys()} this is {collision_seg.linedef_id}")
             elif wall_type == WALL_TYPE.SOLID_WALL:
                 wall_vec = collision_seg.start_vertex - collision_seg.end_vertex
                 wall_vec_norm = wall_vec / wall_vec.magnitude()
@@ -137,7 +141,8 @@ class Player:
                 # likely a passable wall behind - just break out of the loop
                 # rather than trying to figure out how to slide.
                 print("impassable wall")
-                break
+                return pos
+        print(f" returning pos {pos}")
         return pos
 
     def mouse_control(self):
