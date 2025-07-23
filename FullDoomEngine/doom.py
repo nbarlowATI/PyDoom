@@ -50,20 +50,19 @@ class DoomEngine:
         pg.surfarray.blit_array(self.screen, self.framebuffer)
         self.view_renderer.draw_status_bar()
         self.view_renderer.draw_doomguy(self.player.face_img)
-        self.view_renderer.draw_weapon(self.player.current_weapon)
-        pg.display.flip()  # put flip here for debug draw
-      #  self.screen.fill('black')
-      #  self.map_renderer.draw()
-#        pg.display.flip()
+        self.view_renderer.draw_weapon(WEAPON_SPRITES[self.player.current_weapon])
+        pg.display.flip()  
 
     def check_events(self):
         for e in pg.event.get():
             if e.type == pg.QUIT or (e.type == pg.KEYDOWN and e.key == pg.K_ESCAPE):
                 self.running = False
-            if e.type == pg.KEYDOWN and e.key == pg.K_SPACE:
-                self.player.handle_action()
-#                if self.player.active_door:
-#                    self.player.active_door.toggle_open()
+            if e.type == pg.KEYDOWN:
+                if e.key == pg.K_SPACE:
+                    self.player.handle_action()
+                elif pg.K_0 <= e.key <= pg.K_9:
+                    self.player.change_weapon(chr(e.key))
+
             if e.type == DOOMGUY_FACE_CHANGE_EVENT:
                 self.player.set_face_image()
 

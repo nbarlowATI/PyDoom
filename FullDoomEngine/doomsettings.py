@@ -20,6 +20,8 @@ PLAYER_FALL_SPEED = 0.3
 PLAYER_STEP_AMPLITUDE = 10
 PLAYER_STEP_FREQUENCY = 0.01
 
+DOOR_OPEN_SPEED = 1
+
 WEAPON_CHANGE_SPEED = 0.1
 
 SCREEN_DIST = H_WIDTH / math.tan(math.radians(H_FOV))
@@ -47,7 +49,11 @@ class WALL_TYPE(Enum):
 SAMPLE_RATE = 11025
 
 # sprites
+WEAPON_BUTTONS = {
+    '1' : "pistol",
+    '2' : "shotgun"
+}
 WEAPON_SPRITES = {
-    '1' : 'PISGA0',
-    '2' : 'SHTGA0',
+    'pistol' : 'PISGA0',
+    'shotgun' : 'SHTGA0',
 }

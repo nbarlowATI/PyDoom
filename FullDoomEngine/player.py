@@ -22,8 +22,8 @@ class Player:
         self.step_phase = 0
         self.climbing_or_falling = False
         self.active_door = None
-        self.current_weapon = 'PISGA0'
-        self.selected_weapon = 'PISGA0'
+        self.current_weapon = 'pistol'
+        self.selected_weapon = 'pistol'
         self.lowering_weapon = False
         self.raising_weapon = False
         self.health = 100
@@ -70,9 +70,6 @@ class Player:
         self.mouse_control()
         if self.active_door:
             self.active_door.update()
-        
-    def change_weapon(self):
-        key_state = pg.key.get_pressed()
 
     def control(self):
         speed = PLAYER_SPEED * self.engine.dt
@@ -164,6 +161,17 @@ class Player:
             return
         if check_segment(seg) == WALL_TYPE.DOOR and seg.linedef_id in self.engine.doors:
             self.engine.doors[seg.linedef_id].toggle_open()
+
+    def change_weapon(self, weapon_id):
+        """
+        Called when number key is pressed
+        """
+        if weapon_id not in WEAPON_BUTTONS:
+            return
+        if WEAPON_BUTTONS[weapon_id] == self.current_weapon:
+            return
+        print(f"changing weapon to {WEAPON_BUTTONS[weapon_id]}")
+        self.current_weapon = WEAPON_BUTTONS[weapon_id]
 
 def check_segment(segment):
     if segment.back_sector is None:

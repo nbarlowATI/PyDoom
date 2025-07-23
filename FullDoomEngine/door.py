@@ -1,4 +1,5 @@
 from sounds import SoundEffect
+from doomsettings import DOOR_OPEN_SPEED
 
 class Door:
     def __init__(self, segment, engine):
@@ -11,7 +12,7 @@ class Door:
         self.is_closed = True
         self.sound_effect = SoundEffect("DSDOROPN", self.engine)
         self.target_height = self.segment.front_sector.ceil_height
-        self.open_speed = 30
+        self.open_speed = DOOR_OPEN_SPEED
         print(f"creating a door!!! {self.id}")
         
 
