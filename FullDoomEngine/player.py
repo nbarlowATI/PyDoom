@@ -26,6 +26,7 @@ class Player:
         self.selected_weapon = 'pistol'
         self.lowering_weapon = False
         self.raising_weapon = False
+        self.weapon_y_offset = 0
         self.health = 100
         self.face_img = 'STFST00'
         
@@ -70,6 +71,24 @@ class Player:
         self.mouse_control()
         if self.active_door:
             self.active_door.update()
+        if self.selected_weapon != self.current_weapon \
+            and not self.lowering_weapon:
+            print("Will lower weapon!")
+            self.lowering_weapon = True
+        if self.raising_weapon:
+            if self.weapon_y_offset <= 0:
+                self.raising_weapon = False
+            else:
+                self.weapon_y_offset -= WEAPON_CHANGE_SPEED
+        if self.lowering_weapon:
+            if self.weapon_y_offset >= MAX_WEAPON_OFFSET:
+                self.lowering_weapon = False
+                self.raising_weapon = True
+                self.current_weapon = self.selected_weapon
+            else:
+                self.weapon_y_offset += WEAPON_CHANGE_SPEED
+    
+
 
     def control(self):
         speed = PLAYER_SPEED * self.engine.dt
@@ -171,7 +190,7 @@ class Player:
         if WEAPON_BUTTONS[weapon_id] == self.current_weapon:
             return
         print(f"changing weapon to {WEAPON_BUTTONS[weapon_id]}")
-        self.current_weapon = WEAPON_BUTTONS[weapon_id]
+        self.selected_weapon = WEAPON_BUTTONS[weapon_id]
 
 def check_segment(segment):
     if segment.back_sector is None:
