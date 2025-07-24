@@ -13,8 +13,11 @@ from view_renderer import ViewRenderer
 from events import *
 from doomsettings import *
 
+MAP_VIEW = True
+
 class DoomEngine:
     def __init__(self, wad_path="wad/DOOM1.wad"):
+        self.map_mode = MAP_VIEW
         self.wad_path = wad_path
         self.screen = pg.display.set_mode(WIN_RES, pg.SCALED)
         self.framebuffer = pg.surfarray.array3d(self.screen)
@@ -47,12 +50,18 @@ class DoomEngine:
         
 
     def draw(self):
-        pg.surfarray.blit_array(self.screen, self.framebuffer)
-        self.view_renderer.draw_weapon(WEAPON_SPRITES[self.player.current_weapon])
-        self.view_renderer.draw_status_bar()
-        self.view_renderer.draw_doomguy(self.player.face_img)
-        
-        pg.display.flip()  
+
+        if self.map_mode:
+            pg.display.flip()  # put flip here for debug draw
+            self.screen.fill('black')
+            self.map_renderer.draw()
+        else:
+            pg.surfarray.blit_array(self.screen, self.framebuffer)
+            self.view_renderer.draw_weapon(WEAPON_SPRITES[self.player.current_weapon])
+            self.view_renderer.draw_status_bar()
+            self.view_renderer.draw_doomguy(self.player.face_img)
+            
+            pg.display.flip()  
 
     def check_events(self):
         for e in pg.event.get():

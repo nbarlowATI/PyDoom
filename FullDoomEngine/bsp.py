@@ -105,7 +105,8 @@ class BSP:
             seg = self.segments[sub_sector.first_seg_id + i]
             if result:= self.add_segment_to_fov(seg.start_vertex, seg.end_vertex):
                 self.engine.seg_handler.classify_segment(seg, *result)
-#                self.engine.map_renderer.draw_seg(seg, sub_sector_id)
+                if self.engine.map_mode:
+                    self.engine.map_renderer.draw_seg(seg, sub_sector_id)
 
 
     def render_bsp_node(self, node_id):
