@@ -128,22 +128,19 @@ class BSP:
                 self.render_bsp_node(node.back_child_id)
 
 
-    def is_on_back_side(self, node):
-        dx = self.player.pos.x - node.x_partition
-        dy = self.player.pos.y - node.y_partition
-        return dx * node.dy_partition - dy * node.dx_partition <= 0
-    
-    def is_point_on_back_side(self, position, node):
+    def is_on_back_side(self, node, position=None):
+        if not position:
+            position = self.player.pos
         dx = position.x - node.x_partition
         dy = position.y - node.y_partition
         return dx * node.dy_partition - dy * node.dx_partition <= 0
 
-    def get_sub_sector_height(self):
+    def get_sub_sector_height(self, position=None):
         sub_sector_id = self.root_node_id
         while not sub_sector_id >= self.SUB_SECTOR_IDENTIFIER:
             node = self.nodes[sub_sector_id]
 
-            is_on_back = self.is_on_back_side(node)
+            is_on_back = self.is_on_back_side(node, position)
             if is_on_back:
                 sub_sector_id = self.nodes[sub_sector_id].back_child_id
             else:
@@ -163,7 +160,7 @@ class BSP:
             return self._check_subsector(node_id - self.SUB_SECTOR_IDENTIFIER, end_pos)
 
         node = self.nodes[node_id]
-        side = self.is_point_on_back_side(end_pos, node)
+        side = self.is_on_back_side(node, end_pos)
 
         front = self._trace_node(node.front_child_id, end_pos)
         back = self._trace_node(node.back_child_id, end_pos)

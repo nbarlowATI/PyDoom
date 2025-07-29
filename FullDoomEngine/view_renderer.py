@@ -2,6 +2,7 @@ from numba import njit
 from doomsettings import *
 import random
 from random import randrange as rnd
+import pygame as pg
 import pygame.gfxdraw as gfx
 
 
@@ -55,6 +56,14 @@ class ViewRenderer:
         img = self.doomguy[sprite_name]
         pos = (H_WIDTH - img.get_width() //2,HEIGHT - img.get_height() )
         self.screen.blit(img, pos)
+
+    def draw_npc(self, npc):
+        if npc.scaled_sprite:
+            self.screen.blit(npc.scaled_sprite, npc.blit_pos)
+
+    def draw_object(self, object):
+        if object.scaled_sprite:
+            self.screen.blit(object.scaled_sprite, object.blit_pos)
 
     def draw_flat(self, tex_id, light_level, x, y1, y2, world_z):
         if y1 < y2:

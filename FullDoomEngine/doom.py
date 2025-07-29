@@ -5,6 +5,7 @@ from wad_data import WADData
 from map_renderer import MapRenderer
 from player import Player
 from bsp import BSP
+from object_handler import ObjectHandler
 from raycasting import RayCasting
 from seg_handler import SegHandler
 from sounds import SoundEffect
@@ -13,11 +14,10 @@ from view_renderer import ViewRenderer
 from events import *
 from doomsettings import *
 
-MAP_VIEW = True
 
 class DoomEngine:
     def __init__(self, wad_path="wad/DOOM1.wad"):
-        self.map_mode = MAP_VIEW
+        self.map_mode = False
         self.wad_path = wad_path
         self.screen = pg.display.set_mode(WIN_RES, pg.SCALED)
         self.framebuffer = pg.surfarray.array3d(self.screen)
@@ -35,12 +35,15 @@ class DoomEngine:
         self.raycaster = RayCasting(self)
         self.seg_handler = SegHandler(self)
         self.view_renderer = ViewRenderer(self)
+        self.object_handler = ObjectHandler(self)
+        self.object_handler.add_objects_npcs()
         self.doors = {}
         # set timer to change doomguy face every 2s
         pg.time.set_timer(DOOMGUY_FACE_CHANGE_EVENT, 2000)
 
     def update(self):
         self.player.update()
+        self.object_handler.update()
         self.seg_handler.update()
         self.bsp.update()
         for door in self.doors.values():
@@ -60,7 +63,10 @@ class DoomEngine:
             self.view_renderer.draw_weapon(WEAPON_SPRITES[self.player.current_weapon])
             self.view_renderer.draw_status_bar()
             self.view_renderer.draw_doomguy(self.player.face_img)
-            
+            for npc in self.object_handler.npcs:
+                self.view_renderer.draw_npc(npc)
+            for obj in self.object_handler.objects:
+                self.view_renderer.draw_object(obj)
             pg.display.flip()  
 
     def check_events(self):
@@ -72,7 +78,10 @@ class DoomEngine:
                     self.player.handle_action()
                 elif pg.K_0 <= e.key <= pg.K_9:
                     self.player.change_weapon(chr(e.key))
-
+                elif e.key == pg.K_n:
+                    print(f"player position {self.player.pos}")
+                elif e.key == pg.K_m:
+                    self.map_mode = not self.map_mode
             if e.type == DOOMGUY_FACE_CHANGE_EVENT:
                 self.player.set_face_image()
 

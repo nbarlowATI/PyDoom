@@ -35,6 +35,7 @@ class Player:
         # sinusoid with time as we step
         oscillation = PLAYER_STEP_AMPLITUDE * math.sin(self.step_phase * PLAYER_STEP_FREQUENCY)
         self.view_height = self.height + oscillation
+        return self.view_height
 
     def get_height(self):
         target_height = PLAYER_HEIGHT + self.engine.bsp.get_sub_sector_height()
@@ -73,7 +74,6 @@ class Player:
             self.active_door.update()
         if self.selected_weapon != self.current_weapon \
             and not self.lowering_weapon:
-            print("Will lower weapon!")
             self.lowering_weapon = True
         if self.raising_weapon:
             if self.weapon_y_offset <= 0:
@@ -132,33 +132,34 @@ class Player:
         pos = self.pos
         for collision_seg in collision_segs:
             wall_type = check_segment(collision_seg)
-            print(f"wall type {wall_type}")
+ #           print(f"wall type {wall_type}")
             if wall_type == WALL_TYPE.PASSABLE:
                 pos += movement
-                print(f"passable wall {pos} {movement}")
+ #               print(f"passable wall {pos} {movement}")
             elif wall_type == WALL_TYPE.DOOR:
                 if collision_seg.linedef_id in self.engine.doors:
                     door = self.engine.doors[collision_seg.linedef_id]
-                    print(f"door open? {door.is_open} {door.is_opening} {door.is_closed} {door.is_closing}")
+ #                   print(f"door open? {door.is_open} {door.is_opening} {door.is_closed} {door.is_closing}")
                     if door.is_open or door.is_opening:
                         # door is open
                         pos += movement
-                        print(f"can move through door {pos} {movement}")
+ #                       print(f"can move through door {pos} {movement}")
                         return pos
                 else:
-                    print(f"known doors {self.engine.doors.keys()} this is {collision_seg.linedef_id}")
+                    pass
+ #                   print(f"known doors {self.engine.doors.keys()} this is {collision_seg.linedef_id}")
             elif wall_type == WALL_TYPE.SOLID_WALL:
                 wall_vec = collision_seg.start_vertex - collision_seg.end_vertex
                 wall_vec_norm = wall_vec / wall_vec.magnitude()
                 dot_product = movement.dot(wall_vec_norm)
                 pos += dot_product * wall_vec_norm
-                print("solid wall")
+ #               print("solid wall")
             elif wall_type == WALL_TYPE.IMPASSABLE:
                 # likely a passable wall behind - just break out of the loop
                 # rather than trying to figure out how to slide.
-                print("impassable wall")
+   #             print("impassable wall")
                 return pos
-        print(f" returning pos {pos}")
+ #       print(f" returning pos {pos}")
         return pos
 
     def mouse_control(self):
@@ -189,7 +190,6 @@ class Player:
             return
         if WEAPON_BUTTONS[weapon_id] == self.current_weapon:
             return
-        print(f"changing weapon to {WEAPON_BUTTONS[weapon_id]}")
         self.selected_weapon = WEAPON_BUTTONS[weapon_id]
 
 def check_segment(segment):

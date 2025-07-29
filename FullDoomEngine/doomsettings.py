@@ -9,7 +9,9 @@ WIN_RES = WIDTH, HEIGHT = int(DOOM_W*SCALE), int(DOOM_H*SCALE)
 H_WIDTH, H_HEIGHT = WIDTH // 2, HEIGHT // 2
 
 FOV = 90
+FOV_RAD = math.pi/2
 H_FOV = FOV // 2
+H_FOV_RAD = FOV_RAD / 2
 
 PLAYER_SPEED = 0.3
 PLAYER_ROT_SPEED = 0.12
@@ -60,3 +62,11 @@ WEAPON_SPRITES = {
     'shotgun' : 'SHTGA0',
 }
 MAX_WEAPON_OFFSET = 200
+
+# sprites in the WAD file are larger than world space
+# e.g. soldier is 220 pixels vs 56 for canonical doom sprite.
+SPRITE_PIX_RATIO = 56 / 220
+
+# sprites can scale up to 2x original image size when 
+# player is right next to them.
+MAX_SPRITE_HEIGHT_RATIO = 2

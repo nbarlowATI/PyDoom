@@ -27,7 +27,7 @@ class RayCasting:
                     result = self.intersect_ray_segment(start_pos, direction, seg.start_vertex, seg.end_vertex)
                     if result:
                         _, t = result
-                        print(f"got a hit distance {t}")
+#                        print(f"got a hit distance {t}")
                         if t < closest_t and t <= distance:
                             closest_hit = seg
                             closest_t = t
@@ -49,10 +49,10 @@ class RayCasting:
         ray_start = self.player.pos
         angle_rad = math.radians(self.player.angle)
         ray_vector = vec2(math.cos(angle_rad), math.sin(angle_rad))
-        print(f" aboout to cast a ray!")
+#        print(f" aboout to cast a ray!")
         hit = self.cast_ray(ray_start, ray_vector, ACTIVATION_DIST)
         if hit:
-            print(f"got a hit!!! {hit} {hit.linedef.line_type}")
+ #           print(f"got a hit!!! {hit} {hit.linedef.line_type}")
             if isinstance(hit, Seg) and hit.linedef.line_type == 1:
                 if not hit.linedef_id in self.engine.doors:
                     new_door = Door(hit, self.engine)
@@ -85,50 +85,10 @@ class RayCasting:
         
         t1 = ((seg_start.x - ray_start.x) * seg_dy - (seg_start.y - ray_start.y) * seg_dx) / denom
         t2 = ((seg_start.x - ray_start.x) * ray_dy - (seg_start.y - ray_start.y) * ray_dx) / denom
-        print(f" t1 {t1} t2 {t2} denom {denom}")
         if t1 >= 0 and 0 <= t2 <= 1:
             hit_x = ray_start.x + ray_dx * t1
             hit_y = ray_start.y + ray_dy * t1
-            print(f"Got a hit {t1} {t2}")
+#            print(f"Got a hit {t1} {t2}")
             return vec2(hit_x, hit_y), t1
         return None
 
-
-def intersect_ray_segment(ray_origin, ray_dir, seg_start, seg_end):
-    """
-    Check for intersection between a ray and a segment in 2D space.
-    
-    Parameters:
-        ray_origin: vec2 - origin point of the ray
-        ray_dir: vec2 - normalized direction vector of the ray
-        seg_start: vec2 - start point of the segment
-        seg_end: vec2 - end point of the segment
-
-    Returns:
-        Tuple (hit_point, t_ray) if intersecting, else None
-    """
-    # Segment vector
-    v1 = ray_origin
-    v2 = ray_origin + ray_dir
-    v3 = seg_start
-    v4 = seg_end
-    # Convert to parametric form
-    dx1 = v2.x - v1.x
-    dy1 = v2.y - v1.y
-    dx2 = v4.x - v3.x
-    dy2 = v4.y - v3.y
-
-    denom = dx1 * dy2 - dy1 * dx2
-    if denom == 0:
-        return None  # Parallel lines
-
-    t1 = ((v3.x - v1.x) * dy2 - (v3.y - v1.y) * dx2) / denom
-    t2 = ((v3.x - v1.x) * dy1 - (v3.y - v1.y) * dx1) / denom
-    print(f" T1 {t1} T2 {t2} DENOM {denom}")
-    if t1 >= 0 and 0 <= t2 <= 1:
-        # Intersection point on ray and within segment
-        hit_x = v1.x + dx1 * t1
-        hit_y = v1.y + dy1 * t1
-        return vec2(hit_x, hit_y), t1
-
-    return None

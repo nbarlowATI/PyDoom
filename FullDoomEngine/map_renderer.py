@@ -39,6 +39,7 @@ class MapRenderer:
         self.draw_vertices()
         self.draw_linedefs()
         self.draw_player_pos()
+        self.draw_npcs()
         #self.draw_node(node_id=self.engine.bsp.root_node_id)
 
     def draw_vlines(self, x1, x2, sub_sector_id):
@@ -89,6 +90,14 @@ class MapRenderer:
         x2, y2 = self.remap_x(x + len_ray * sin_a2), self.remap_y(y + len_ray * cos_a2)
         pg.draw.line(self.engine.screen, "yellow", (px,py), (x1, y1), 4)
         pg.draw.line(self.engine.screen, "yellow", (px,py), (x2, y2), 4)
+
+
+    def draw_npcs(self):
+        for npc in self.engine.object_handler.npcs:
+            pos = npc.pos
+            x = self.remap_x(pos.x)
+            y = self.remap_y(pos.y)
+            pg.draw.circle(self.engine.screen, 'blue', (x,y), 8)
 
 
     def draw_linedefs(self):
