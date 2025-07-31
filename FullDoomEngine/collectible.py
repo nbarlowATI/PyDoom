@@ -11,7 +11,5 @@ class Collectible(Thing):
         self.extra_y_offset = 20
 
     def update(self):
-        angle = self.calculate_angle()
-        
-        self.scaled_sprite, self.blit_pos = self.scale_and_position()
+        super().update()
 

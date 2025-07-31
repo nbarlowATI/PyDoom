@@ -111,6 +111,9 @@ class SegHandler:
         for x in range(x1, x2+1):
             draw_wall_y1 = wall_y1 - 1
             draw_wall_y2 = wall_y2
+            # Update clipping buffers
+            renderer.clip_top[x] = max(renderer.clip_top[x],draw_wall_y1)
+            renderer.clip_bottom[x] = min(renderer.clip_bottom[x], draw_wall_y2)
             
 
             if b_draw_ceil:
@@ -125,11 +128,11 @@ class SegHandler:
                     angle = rw_center_angle - self.x_to_angle[x]
                     texture_column = rw_distance * math.tan(math.radians(angle)) - rw_offset
                     inv_scale = 1.0 / rw_scale1
-
+                    # update wall_depth buffer
+                    renderer.wall_depth[x] = min(rw_distance, renderer.wall_depth[x])
                     renderer.draw_wall_col(
                         framebuffer, wall_texture, texture_column, x, wy1, wy2,
                         middle_tex_alt, inv_scale, light_level,
-                    #    renderer.clip_top, renderer.clip_bottom,
                     )
                 
             if b_draw_floor:
@@ -262,6 +265,9 @@ class SegHandler:
         for x in range(x1, x2 + 1):
             draw_wall_y1 = wall_y1 - 1
             draw_wall_y2 = wall_y2
+            # Update clipping buffers
+            renderer.clip_top[x] = max(renderer.clip_top[x], wall_y1)
+            renderer.clip_bottom[x] = min(renderer.clip_bottom[x], wall_y2)
 
             if seg_textured:
                 angle = rw_center_angle - self.x_to_angle[x]
@@ -282,7 +288,6 @@ class SegHandler:
                 renderer.draw_wall_col(
                     framebuffer, upper_wall_texture, texture_column, x, wy1, wy2,
                     upper_tex_alt, inv_scale, light_level,
-               #     renderer.clip_top, renderer.clip_bottom,
                 )
                 
                 
@@ -314,7 +319,6 @@ class SegHandler:
                 renderer.draw_wall_col(
                     framebuffer, lower_wall_texture, texture_column, x, wy1, wy2,
                     lower_tex_alt, inv_scale, light_level,
-               #     renderer.clip_top, renderer.clip_bottom,
                 )
                 if lower_clip[x] > wy1:
                     lower_clip[x] = wy1

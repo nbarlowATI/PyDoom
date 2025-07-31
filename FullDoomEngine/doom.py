@@ -45,22 +45,23 @@ class DoomEngine:
         # reset view renderer's clip buffers, used to correctly occlude sprites
         self.view_renderer.reset_clip_buffers()
         self.player.update()
-        self.object_handler.update()
+        
         self.seg_handler.update()
         self.bsp.update()
         for door in self.doors.values():
             door.update()
+        self.object_handler.update()
         self.dt = self.clock.tick()
         pg.display.set_caption(f"{self.clock.get_fps()}")
         
 
     def draw(self):
-
         if self.map_mode:
             pg.display.flip()  # put flip here for debug draw
             self.screen.fill('black')
             self.map_renderer.draw()
         else:
+            self.view_renderer.draw_occlusion_lines()
             pg.surfarray.blit_array(self.screen, self.framebuffer)
             for npc in self.object_handler.npcs:
                 self.view_renderer.draw_sprite(npc)

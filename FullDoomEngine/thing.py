@@ -74,7 +74,7 @@ class Thing:
         return rotation_index
     
     def update(self):
-        self.scaled_sprite, self.blit_pos = self.scale_and_position()
+        self.scaled_sprite, self.blit_pos, self.dist = self.scale_and_position()
         
 
     def get_y_offset(self, proj_plane_dist, view_y):
@@ -104,7 +104,7 @@ class Thing:
 
         # don't render if behind the player
         if view_y <= 0:
-            return None, None
+            return None, None, None
         
         # distance from player to sprite (for scaling)
         dist = math.hypot(view_x, view_y)
@@ -124,7 +124,7 @@ class Thing:
         blit_x = screen_x - sprite_width // 2
         blit_y = HEIGHT // 2 - sprite_height // 2 - y_offset
 
-        return sprite, (blit_x, blit_y)
+        return sprite, (blit_x, blit_y), dist
 
     def retrieve_cached_sprite(self, angle, scale):
         """ 

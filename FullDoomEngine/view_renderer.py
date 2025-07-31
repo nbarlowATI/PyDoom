@@ -1,5 +1,6 @@
 from numba import njit
 from doomsettings import *
+import math
 import random
 from random import randrange as rnd
 import pygame as pg
@@ -23,13 +24,15 @@ class ViewRenderer:
         self.sky_tex = self.asset_data.sky_tex
         self.sky_inv_scale = 160 / HEIGHT
         self.sky_tex_alt = 100
-        # column-based clipping buffer
+        # column-based and z-distance clipping buffers
         self.reset_clip_buffers()
-
+        
     # reset clip buffers every frame
     def reset_clip_buffers(self):
         self.clip_top = [0] * WIDTH
         self.clip_bottom = [HEIGHT - 1] * WIDTH
+        self.wall_depth = [math.inf] * WIDTH
+
 
     def get_colour(self, tex, light_level):
         str_light = str(light_level)
@@ -49,39 +52,40 @@ class ViewRenderer:
     def draw_sprite(self, sprite):
         if not sprite.scaled_sprite:
             return
-        self.screen.blit(sprite.scaled_sprite, sprite.blit_pos)
-        # calculate clipping / occlusion
-        # sprite_width = int(sprite.scaled_sprite.get_width())
-        
-        # for i in range(sprite_width):
-        #     screen_column = sprite.blit_pos[0] + i
-        #     if 0 <= screen_column < WIDTH:
-        #         col_clip_top = self.clip_top[screen_column]
-        #         col_clip_bottom = self.clip_bottom[screen_column]
-        #         col_rect = pg.Rect(i,0, 1, sprite.scaled_sprite.get_height())
-        #         sprite_col = sprite.scaled_sprite.subsurface(col_rect)
 
-        #         col_draw_y = sprite.blit_pos[1]
+        sprite_width = sprite.scaled_sprite.get_width()
+        sprite_height = sprite.scaled_sprite.get_height()
+        blit_x, blit_y = sprite.blit_pos
 
-        #         # clip top
-        #         over_top = max(col_clip_top - sprite.blit_pos[1], 0)
-        #         under_bottom = max((sprite.blit_pos[1] + sprite_col.get_height()) - col_clip_bottom, 0)
+        for i in range(sprite_width):
+            screen_column = blit_x + i
+            if not (0 <= screen_column < WIDTH):
+                continue
 
-        #         # final height to blit
-        #         visible_height = sprite_col.get_height() - over_top - under_bottom
+            # depth clipping
+            if sprite.dist > self.wall_depth[screen_column]:
+                continue
+            
+            # try this
+            # col_rect = pg.Rect(i, blit_y, 1, sprite_height)
+            # sprite_col = sprite.scaled_sprite.subsurface(col_rect)
+            # self.screen.blit(sprite_col, (screen_column, blit_y))
 
-        #         if visible_height > 0:
-        #             clipped_col = sprite_col.subsurface(pg.Rect(0, over_top, 1, visible_height))
-        #             self.screen.blit(clipped_col, (screen_column, sprite.blit_pos[1] + over_top))
+            # vertical column clipping
+            col_clip_top = self.clip_top[screen_column]
+            col_clip_bottom = self.clip_bottom[screen_column]
 
+            sprite_col_y1 = blit_y
+            sprite_col_y2 = blit_y + sprite_height
 
-    def draw_npc(self, npc):
-        if npc.scaled_sprite:
-            self.screen.blit(npc.scaled_sprite, npc.blit_pos)
-
-    def draw_object(self, object):
-        if object.scaled_sprite:
-            self.screen.blit(object.scaled_sprite, object.blit_pos)
+            clipped_y1 = max(sprite_col_y1, col_clip_top)
+            clipped_y2 = min(sprite_col_y2, col_clip_bottom)
+            visible_height = clipped_y2 - clipped_y1
+            if visible_height > 0:
+                src_y = clipped_y1 - sprite_col_y1
+                col_rect = pg.Rect(i, src_y, 1, visible_height)
+                sprite_col = sprite.scaled_sprite.subsurface(col_rect)
+                self.screen.blit(sprite_col, (screen_column, clipped_y1))
 
     def draw_flat(self, tex_id, light_level, x, y1, y2, world_z):
         if y1 < y2:
@@ -91,7 +95,6 @@ class ViewRenderer:
                 self.draw_wall_col(
                     self.framebuffer, self.sky_tex, tex_column, x, y1, y2,
                     self.sky_tex_alt, self.sky_inv_scale, light_level=1.0,
-                #    clip_top=self.clip_top, clip_bottom=self.clip_bottom
                 )
             else:
                 flat_tex = self.textures[tex_id]
@@ -108,15 +111,28 @@ class ViewRenderer:
         pos = (x_pos, y_pos)
         self.screen.blit(img, pos)
 
+    # draw the status bar at the bottom of the screen
     def draw_status_bar(self):
         img = self.status_bar
         pos = (H_WIDTH - img.get_width() //2, HEIGHT - img.get_height())
         self.screen.blit(img, pos)
 
+    # draw the doomguy's face on the status bar.
     def draw_doomguy(self, sprite_name='STFST00'):
         img = self.doomguy[sprite_name]
         pos = (H_WIDTH - img.get_width() //2,HEIGHT - img.get_height() )
         self.screen.blit(img, pos)
+
+    def draw_occlusion_lines(self):
+        """
+        For debugging
+        """
+        for x in range(WIDTH):
+            # ensure clip buffers are in the right range
+            clip_top = int(min(max(0, self.clip_top[x]), HEIGHT-1))
+            clip_bottom = int(min(max(0, self.clip_bottom[x]), HEIGHT-1))
+            self.framebuffer[x, clip_top] = (255,0,0)
+            self.framebuffer[x, clip_bottom] = (0,0,255)
 
     @staticmethod
     @njit
@@ -127,7 +143,7 @@ class ViewRenderer:
 
     @staticmethod
     @njit(fastmath=True)
-    def draw_wall_col(framebuffer, tex, tex_col, x, y1, y2, tex_alt, inv_scale, light_level):#, clip_top, clip_bottom):
+    def draw_wall_col(framebuffer, tex, tex_col, x, y1, y2, tex_alt, inv_scale, light_level):
         if y1 < y2:
             tex_w, tex_h = len(tex), len(tex[0])
             tex_col = int(tex_col) % tex_w
@@ -138,9 +154,6 @@ class ViewRenderer:
                 col = col[0] * light_level, col[1] * light_level, col[2] * light_level
                 framebuffer[x, iy] = col
                 tex_y += inv_scale
-            # Update clipping buffers
-       #     clip_top[x] = min(clip_top[x], y1)
-       #     clip_bottom[x] = max(clip_bottom[x], y2)
 
     @staticmethod
     @njit(fastmath=True)
