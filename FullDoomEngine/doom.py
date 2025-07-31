@@ -42,6 +42,8 @@ class DoomEngine:
         pg.time.set_timer(DOOMGUY_FACE_CHANGE_EVENT, 2000)
 
     def update(self):
+        # reset view renderer's clip buffers, used to correctly occlude sprites
+#        self.view_renderer.reset_clip_buffers()
         self.player.update()
         self.object_handler.update()
         self.seg_handler.update()
@@ -60,13 +62,14 @@ class DoomEngine:
             self.map_renderer.draw()
         else:
             pg.surfarray.blit_array(self.screen, self.framebuffer)
+            for npc in self.object_handler.npcs:
+                self.view_renderer.draw_sprite(npc)
+            for obj in self.object_handler.objects:
+                self.view_renderer.draw_sprite(obj)
             self.view_renderer.draw_weapon(WEAPON_SPRITES[self.player.current_weapon])
             self.view_renderer.draw_status_bar()
             self.view_renderer.draw_doomguy(self.player.face_img)
-            for npc in self.object_handler.npcs:
-                self.view_renderer.draw_npc(npc)
-            for obj in self.object_handler.objects:
-                self.view_renderer.draw_object(obj)
+
             pg.display.flip()  
 
     def check_events(self):

@@ -16,6 +16,8 @@ class Thing:
         self.sprite_cache = {}
         self.current_frame = "A"
         self.orig_image_size = None
+        self.clip_top = [0] * WIDTH
+        self.clip_bottom = [HEIGHT -1] * WIDTH
 
     def pre_cache(self):
         """
@@ -72,7 +74,8 @@ class Thing:
         return rotation_index
     
     def update(self):
-        pass
+        self.scaled_sprite, self.blit_pos = self.scale_and_position()
+        
 
     def get_y_offset(self, proj_plane_dist, view_y):
         """
@@ -117,12 +120,10 @@ class Thing:
         sprite_height, sprite_width = sprite.get_size()
 
         y_offset = self.get_y_offset(proj_plane_dist, view_y)
-        # get the nearest cached sprite
-  #      print(f"dx,dy {dx},{dy} view_x, view_y {view_x}, {view_y} screen_x {screen_x} sin_a {sin_a} cos_a {cos_a}")
+  
         blit_x = screen_x - sprite_width // 2
         blit_y = HEIGHT // 2 - sprite_height // 2 - y_offset
 
-       # scaled_sprite = pg.transform.scale(img, (sprite_width, sprite_height))
         return sprite, (blit_x, blit_y)
 
     def retrieve_cached_sprite(self, angle, scale):

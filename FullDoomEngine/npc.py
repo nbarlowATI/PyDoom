@@ -37,9 +37,7 @@ class ZombieMan(NPC):
         self.pre_cache()
 
     def update(self):
-        angle = self.calculate_angle()
-        if self.state == NPCState.standing:
-            self.scaled_sprite, self.blit_pos = self.scale_and_position()
+        super().update()
 
 
 class ShotgunGuy(NPC):
@@ -57,9 +55,7 @@ class ShotgunGuy(NPC):
         self.pre_cache()
 
     def update(self):
-        angle = self.calculate_angle()
-        if self.state == NPCState.standing:
-            self.scaled_sprite, self.blit_pos = self.scale_and_position()
+        super().update()
 
 
 class Imp(NPC):
@@ -77,8 +73,6 @@ class Imp(NPC):
         self.pre_cache()
 
     def update(self):
-        angle = self.calculate_angle()
-        if self.state == NPCState.standing:
-            self.scaled_sprite, self.blit_pos = self.scale_and_position()
+        super().update()
 
 

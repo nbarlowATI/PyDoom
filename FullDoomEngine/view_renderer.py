@@ -23,6 +23,13 @@ class ViewRenderer:
         self.sky_tex = self.asset_data.sky_tex
         self.sky_inv_scale = 160 / HEIGHT
         self.sky_tex_alt = 100
+        # column-based clipping buffer
+        self.reset_clip_buffers()
+
+    # reset clip buffers every frame
+    def reset_clip_buffers(self):
+        self.clip_top = [0] * WIDTH
+        self.clip_bottom = [HEIGHT - 1] * WIDTH
 
     def get_colour(self, tex, light_level):
         str_light = str(light_level)
@@ -39,6 +46,60 @@ class ViewRenderer:
             colour = self.get_colour(tex, light)
             self.draw_column(self.framebuffer, x, y1, y2, colour)
 
+    def draw_sprite(self, sprite):
+        if not sprite.scaled_sprite:
+            return
+        self.screen.blit(sprite.scaled_sprite, sprite.blit_pos)
+        # calculate clipping / occlusion
+        # sprite_width = int(sprite.scaled_sprite.get_width())
+        
+        # for i in range(sprite_width):
+        #     screen_column = sprite.blit_pos[0] + i
+        #     if 0 <= screen_column < WIDTH:
+        #         col_clip_top = self.clip_top[screen_column]
+        #         col_clip_bottom = self.clip_bottom[screen_column]
+        #         col_rect = pg.Rect(i,0, 1, sprite.scaled_sprite.get_height())
+        #         sprite_col = sprite.scaled_sprite.subsurface(col_rect)
+
+        #         col_draw_y = sprite.blit_pos[1]
+
+        #         # clip top
+        #         over_top = max(col_clip_top - sprite.blit_pos[1], 0)
+        #         under_bottom = max((sprite.blit_pos[1] + sprite_col.get_height()) - col_clip_bottom, 0)
+
+        #         # final height to blit
+        #         visible_height = sprite_col.get_height() - over_top - under_bottom
+
+        #         if visible_height > 0:
+        #             clipped_col = sprite_col.subsurface(pg.Rect(0, over_top, 1, visible_height))
+        #             self.screen.blit(clipped_col, (screen_column, sprite.blit_pos[1] + over_top))
+
+
+    def draw_npc(self, npc):
+        if npc.scaled_sprite:
+            self.screen.blit(npc.scaled_sprite, npc.blit_pos)
+
+    def draw_object(self, object):
+        if object.scaled_sprite:
+            self.screen.blit(object.scaled_sprite, object.blit_pos)
+
+    def draw_flat(self, tex_id, light_level, x, y1, y2, world_z):
+        if y1 < y2:
+            if tex_id == self.sky_id:
+                tex_column = 2.2 * (self.player.angle + self.engine.seg_handler.x_to_angle[x])
+
+                self.draw_wall_col(
+                    self.framebuffer, self.sky_tex, tex_column, x, y1, y2,
+                    self.sky_tex_alt, self.sky_inv_scale, light_level=1.0,
+                #    clip_top=self.clip_top, clip_bottom=self.clip_bottom
+                )
+            else:
+                flat_tex = self.textures[tex_id]
+
+                self.draw_flat_col(self.framebuffer, flat_tex,
+                                   x, y1, y2, light_level, world_z,
+                                   self.player.angle, self.player.pos.x, self.player.pos.y)
+                
     # draw currently selected weapon at the bottom of the screen, but above status bar.
     def draw_weapon(self, sprite_name):
         img = self.sprites[sprite_name]
@@ -57,28 +118,6 @@ class ViewRenderer:
         pos = (H_WIDTH - img.get_width() //2,HEIGHT - img.get_height() )
         self.screen.blit(img, pos)
 
-    def draw_npc(self, npc):
-        if npc.scaled_sprite:
-            self.screen.blit(npc.scaled_sprite, npc.blit_pos)
-
-    def draw_object(self, object):
-        if object.scaled_sprite:
-            self.screen.blit(object.scaled_sprite, object.blit_pos)
-
-    def draw_flat(self, tex_id, light_level, x, y1, y2, world_z):
-        if y1 < y2:
-            if tex_id == self.sky_id:
-                tex_column = 2.2 * (self.player.angle + self.engine.seg_handler.x_to_angle[x])
-
-                self.draw_wall_col(self.framebuffer, self.sky_tex, tex_column, x, y1, y2,
-                                   self.sky_tex_alt, self.sky_inv_scale, light_level=1.0)
-            else:
-                flat_tex = self.textures[tex_id]
-
-                self.draw_flat_col(self.framebuffer, flat_tex,
-                                   x, y1, y2, light_level, world_z,
-                                   self.player.angle, self.player.pos.x, self.player.pos.y)
-
     @staticmethod
     @njit
     def draw_column(framebuffer, x, y1, y2, colour):
@@ -88,7 +127,7 @@ class ViewRenderer:
 
     @staticmethod
     @njit(fastmath=True)
-    def draw_wall_col(framebuffer, tex, tex_col, x, y1, y2, tex_alt, inv_scale, light_level):
+    def draw_wall_col(framebuffer, tex, tex_col, x, y1, y2, tex_alt, inv_scale, light_level):#, clip_top, clip_bottom):
         if y1 < y2:
             tex_w, tex_h = len(tex), len(tex[0])
             tex_col = int(tex_col) % tex_w
@@ -99,6 +138,9 @@ class ViewRenderer:
                 col = col[0] * light_level, col[1] * light_level, col[2] * light_level
                 framebuffer[x, iy] = col
                 tex_y += inv_scale
+            # Update clipping buffers
+       #     clip_top[x] = min(clip_top[x], y1)
+       #     clip_bottom[x] = max(clip_bottom[x], y2)
 
     @staticmethod
     @njit(fastmath=True)
