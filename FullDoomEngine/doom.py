@@ -43,7 +43,7 @@ class DoomEngine:
 
     def update(self):
         # reset view renderer's clip buffers, used to correctly occlude sprites
-#        self.view_renderer.reset_clip_buffers()
+        self.view_renderer.reset_clip_buffers()
         self.player.update()
         self.object_handler.update()
         self.seg_handler.update()
