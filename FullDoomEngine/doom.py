@@ -25,10 +25,9 @@ class DoomEngine:
         self.clock = pg.time.Clock()
         self.running = True
         self.dt = 1 / 60
-        self.on_init()
 
-    def on_init(self):
-        self.wad_data = WADData(self, map_name="E1M1")
+    def load(self, map_name="E1M1"):
+        self.wad_data = WADData(self, map_name)
         self.map_renderer = MapRenderer(self)
         self.player = Player(self)
         self.bsp = BSP(self)
@@ -61,7 +60,7 @@ class DoomEngine:
             self.screen.fill('black')
             self.map_renderer.draw()
         else:
-            self.view_renderer.draw_occlusion_lines()
+         #   self.view_renderer.draw_occlusion_lines()
             pg.surfarray.blit_array(self.screen, self.framebuffer)
             for npc in self.object_handler.npcs:
                 self.view_renderer.draw_sprite(npc)
@@ -99,6 +98,11 @@ class DoomEngine:
         sys.exit()
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        map = sys.argv[1]
+    else:
+        map = "E1M1"
     game = DoomEngine()
+    game.load(map)
     game.run()
         

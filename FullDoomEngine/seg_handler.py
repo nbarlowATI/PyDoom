@@ -112,8 +112,8 @@ class SegHandler:
             draw_wall_y1 = wall_y1 - 1
             draw_wall_y2 = wall_y2
             # Update clipping buffers
-            renderer.clip_top[x] = max(renderer.clip_top[x],draw_wall_y1)
-            renderer.clip_bottom[x] = min(renderer.clip_bottom[x], draw_wall_y2)
+        #    renderer.clip_top[x] = max(renderer.clip_top[x],draw_wall_y1)
+        #    renderer.clip_bottom[x] = min(renderer.clip_bottom[x], draw_wall_y2)
             
 
             if b_draw_ceil:
@@ -266,8 +266,8 @@ class SegHandler:
             draw_wall_y1 = wall_y1 - 1
             draw_wall_y2 = wall_y2
             # Update clipping buffers
-            renderer.clip_top[x] = max(renderer.clip_top[x], wall_y1)
-            renderer.clip_bottom[x] = min(renderer.clip_bottom[x], wall_y2)
+        #    renderer.clip_top[x] = max(renderer.clip_top[x], wall_y1)
+        #    renderer.clip_bottom[x] = min(renderer.clip_bottom[x], wall_y2)
 
             if seg_textured:
                 angle = rw_center_angle - self.x_to_angle[x]

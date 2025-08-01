@@ -24,13 +24,17 @@ class ViewRenderer:
         self.sky_tex = self.asset_data.sky_tex
         self.sky_inv_scale = 160 / HEIGHT
         self.sky_tex_alt = 100
-        # column-based and z-distance clipping buffers
+        # z-distance clipping buffer:
+        # - a 2D array WIDTHxHEIGHT with each entry being the 
+        # distance from the player to the nearest drawn wall at that
+        # screen position.
         self.reset_clip_buffers()
         
     # reset clip buffers every frame
     def reset_clip_buffers(self):
-        self.clip_top = [0] * WIDTH
-        self.clip_bottom = [HEIGHT - 1] * WIDTH
+        self.z_buffer = [] * WIDTH
+        # self.clip_top = [0] * WIDTH
+        # self.clip_bottom = [HEIGHT - 1] * WIDTH
         self.wall_depth = [math.inf] * WIDTH
 
 
@@ -72,20 +76,20 @@ class ViewRenderer:
             # self.screen.blit(sprite_col, (screen_column, blit_y))
 
             # vertical column clipping
-            col_clip_top = self.clip_top[screen_column]
-            col_clip_bottom = self.clip_bottom[screen_column]
+         #   col_clip_top = self.clip_top[screen_column]
+          #  col_clip_bottom = self.clip_bottom[screen_column]
 
             sprite_col_y1 = blit_y
             sprite_col_y2 = blit_y + sprite_height
 
-            clipped_y1 = max(sprite_col_y1, col_clip_top)
-            clipped_y2 = min(sprite_col_y2, col_clip_bottom)
-            visible_height = clipped_y2 - clipped_y1
-            if visible_height > 0:
-                src_y = clipped_y1 - sprite_col_y1
-                col_rect = pg.Rect(i, src_y, 1, visible_height)
-                sprite_col = sprite.scaled_sprite.subsurface(col_rect)
-                self.screen.blit(sprite_col, (screen_column, clipped_y1))
+         #   clipped_y1 = max(sprite_col_y1, col_clip_top)
+         #   clipped_y2 = min(sprite_col_y2, col_clip_bottom)
+        #    visible_height = clipped_y2 - clipped_y1
+         #   if visible_height > 0:
+             #   src_y = clipped_y1 - sprite_col_y1
+            col_rect = pg.Rect(i, 0, 1, sprite_height)
+            sprite_col = sprite.scaled_sprite.subsurface(col_rect)
+            self.screen.blit(sprite_col, (screen_column, blit_y))
 
     def draw_flat(self, tex_id, light_level, x, y1, y2, world_z):
         if y1 < y2:
