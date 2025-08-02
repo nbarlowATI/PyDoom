@@ -129,6 +129,7 @@ class SegHandler:
                     texture_column = rw_distance * math.tan(math.radians(angle)) - rw_offset
                     inv_scale = 1.0 / rw_scale1
                     # update wall_depth buffer
+                    renderer.z_buffer[x].append([wy1, wy2])
                     renderer.wall_depth[x] = min(rw_distance, renderer.wall_depth[x])
                     renderer.draw_wall_col(
                         framebuffer, wall_texture, texture_column, x, wy1, wy2,
@@ -285,6 +286,9 @@ class SegHandler:
                 
                 wy1 = int(max(draw_upper_wall_y1, upper_clip[x] + 1))
                 wy2 = int(min(draw_upper_wall_y2, lower_clip[x] - 1))
+                # update wall_depth buffer
+                renderer.z_buffer[x].append([wy1, wy2])
+                renderer.wall_depth[x] = min(rw_distance, renderer.wall_depth[x])
                 renderer.draw_wall_col(
                     framebuffer, upper_wall_texture, texture_column, x, wy1, wy2,
                     upper_tex_alt, inv_scale, light_level,
@@ -316,6 +320,9 @@ class SegHandler:
                 
                 wy1 = int(max(draw_lower_wall_y1, upper_clip[x] + 1))
                 wy2 = int(min(draw_lower_wall_y2, lower_clip[x] - 1))
+                # update wall_depth buffer
+                renderer.z_buffer[x].append([wy1, wy2])
+                renderer.wall_depth[x] = min(rw_distance, renderer.wall_depth[x])
                 renderer.draw_wall_col(
                     framebuffer, lower_wall_texture, texture_column, x, wy1, wy2,
                     lower_tex_alt, inv_scale, light_level,

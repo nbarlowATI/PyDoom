@@ -1,4 +1,5 @@
 from numba import njit
+import numpy as np
 from doomsettings import *
 import math
 import random
@@ -32,7 +33,7 @@ class ViewRenderer:
         
     # reset clip buffers every frame
     def reset_clip_buffers(self):
-        self.z_buffer = [] * WIDTH
+        self.z_buffer = np.full((HEIGHT, WIDTH), np.inf)
         # self.clip_top = [0] * WIDTH
         # self.clip_bottom = [HEIGHT - 1] * WIDTH
         self.wall_depth = [math.inf] * WIDTH
