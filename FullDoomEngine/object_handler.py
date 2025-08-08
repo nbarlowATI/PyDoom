@@ -3,6 +3,7 @@ from pygame.math import Vector2 as vec2
 import clevercsv
 
 from collectible import Collectible
+from ornament import Ornament
 from npc import NPC, ZombieMan, ShotgunGuy, Imp
 
 class ObjectHandler:
@@ -12,7 +13,7 @@ class ObjectHandler:
         self.objects = []
 
 
-    def add_objects_npcs(self):
+    def add_objects_npcs(self, difficulty):
         # store pre-computed scaled sprites
         self.sprite_cache = {}
         # read the csv that maps Thing.type to object/npc info
@@ -31,13 +32,23 @@ class ObjectHandler:
                 if index == 0:
                     continue # don't need thing_type again
                 self.thing_index[thing_type][columns[index]] = value
-        self.parse_things_lump()
+        self.parse_things_lump(difficulty)
 
 
-    def parse_things_lump(self):
+    def parse_things_lump(self, difficulty):
+        """
+        Parameters
+        ==========
+        difficulty: int, where 0 is easy and 2 is hard.  
+                    Use with "flags" bit-field to determine which things to instantiate.
+        """
         print(f"will look at {len(self.engine.wad_data.things)} things")
         for thing in self.engine.wad_data.things:
             if int(thing.type) not in self.thing_index:
+                continue
+            flags = thing.flags
+            if flags >> difficulty & 1 == 0:
+                # not spawned for this difficulty level
                 continue
             thing_info = self.thing_index[int(thing.type)]
             if "M" in thing_info["type"]:
@@ -46,6 +57,9 @@ class ObjectHandler:
             elif "P" in thing_info["type"]:
                 # collectible
                 self.add_collectible(thing, thing_info)
+            elif "O" in thing_info["type"]:
+                # ornament
+                self.add_ornament(thing, thing_info)
 
 
 
@@ -60,6 +74,8 @@ class ObjectHandler:
     def add_collectible(self, thing, thing_info):
         self.objects.append(Collectible(self.engine, thing.pos, thing.angle, thing_info))
 
+    def add_ornament(self, thing, thing_info):
+        self.objects.append(Ornament(self.engine, thing.pos, thing.angle, thing_info))
 
 
     def update(self):

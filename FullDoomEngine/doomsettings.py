@@ -70,3 +70,15 @@ SPRITE_PIX_RATIO = 56 / 220
 # sprites can scale up to 2x original image size when 
 # player is right next to them.
 MAX_SPRITE_HEIGHT_RATIO = 2
+
+# from DOOM Wiki - interpret the bits in the "flags" attribute
+# of "Things" in the WAD
+WAD_THING_FLAGS = {
+    0: "Easy",
+    1: "Medium",
+    2: "Hard",
+    3: "Ambush",
+    4: "Not in DM",
+    5: "Not in SP",
+    6: "Not in Coop"
+}

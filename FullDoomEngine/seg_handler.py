@@ -129,8 +129,9 @@ class SegHandler:
                     texture_column = rw_distance * math.tan(math.radians(angle)) - rw_offset
                     inv_scale = 1.0 / rw_scale1
                     # update wall_depth buffer
-                    renderer.z_buffer[x].append([wy1, wy2])
-                    renderer.wall_depth[x] = min(rw_distance, renderer.wall_depth[x])
+                    renderer.z_buffer[x, wy1:wy2] = rw_distance
+#                    renderer.z_buffer[x].append([wy1, wy2])
+#                    renderer.wall_depth[x] = min(rw_distance, renderer.wall_depth[x])
                     renderer.draw_wall_col(
                         framebuffer, wall_texture, texture_column, x, wy1, wy2,
                         middle_tex_alt, inv_scale, light_level,
@@ -266,10 +267,7 @@ class SegHandler:
         for x in range(x1, x2 + 1):
             draw_wall_y1 = wall_y1 - 1
             draw_wall_y2 = wall_y2
-            # Update clipping buffers
-        #    renderer.clip_top[x] = max(renderer.clip_top[x], wall_y1)
-        #    renderer.clip_bottom[x] = min(renderer.clip_bottom[x], wall_y2)
-
+ 
             if seg_textured:
                 angle = rw_center_angle - self.x_to_angle[x]
                 texture_column = rw_distance * math.tan(math.radians(angle)) - rw_offset
@@ -287,8 +285,7 @@ class SegHandler:
                 wy1 = int(max(draw_upper_wall_y1, upper_clip[x] + 1))
                 wy2 = int(min(draw_upper_wall_y2, lower_clip[x] - 1))
                 # update wall_depth buffer
-                renderer.z_buffer[x].append([wy1, wy2])
-                renderer.wall_depth[x] = min(rw_distance, renderer.wall_depth[x])
+                renderer.z_buffer[x, wy1:wy2] = rw_distance
                 renderer.draw_wall_col(
                     framebuffer, upper_wall_texture, texture_column, x, wy1, wy2,
                     upper_tex_alt, inv_scale, light_level,
@@ -320,9 +317,8 @@ class SegHandler:
                 
                 wy1 = int(max(draw_lower_wall_y1, upper_clip[x] + 1))
                 wy2 = int(min(draw_lower_wall_y2, lower_clip[x] - 1))
-                # update wall_depth buffer
-                renderer.z_buffer[x].append([wy1, wy2])
-                renderer.wall_depth[x] = min(rw_distance, renderer.wall_depth[x])
+                # update z buffer
+                renderer.z_buffer[x, wy1:wy2] = rw_distance
                 renderer.draw_wall_col(
                     framebuffer, lower_wall_texture, texture_column, x, wy1, wy2,
                     lower_tex_alt, inv_scale, light_level,

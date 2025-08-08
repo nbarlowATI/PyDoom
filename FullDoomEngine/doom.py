@@ -26,7 +26,7 @@ class DoomEngine:
         self.running = True
         self.dt = 1 / 60
 
-    def load(self, map_name="E1M1"):
+    def load(self, map_name="E1M1", difficulty=1):
         self.wad_data = WADData(self, map_name)
         self.map_renderer = MapRenderer(self)
         self.player = Player(self)
@@ -35,7 +35,7 @@ class DoomEngine:
         self.seg_handler = SegHandler(self)
         self.view_renderer = ViewRenderer(self)
         self.object_handler = ObjectHandler(self)
-        self.object_handler.add_objects_npcs()
+        self.object_handler.add_objects_npcs(difficulty)
         self.doors = {}
         # set timer to change doomguy face every 2s
         pg.time.set_timer(DOOMGUY_FACE_CHANGE_EVENT, 2000)
@@ -66,6 +66,7 @@ class DoomEngine:
                 self.view_renderer.draw_sprite(npc)
             for obj in self.object_handler.objects:
                 self.view_renderer.draw_sprite(obj)
+            self.view_renderer.draw_z_buffer()
             self.view_renderer.draw_weapon(WEAPON_SPRITES[self.player.current_weapon])
             self.view_renderer.draw_status_bar()
             self.view_renderer.draw_doomguy(self.player.face_img)
@@ -102,7 +103,11 @@ if __name__ == "__main__":
         map = sys.argv[1]
     else:
         map = "E1M1"
+    if len(sys.argv) > 2:
+        difficulty = int(sys.argv[2])
+    else:
+        difficulty = 1
     game = DoomEngine()
-    game.load(map)
+    game.load(map, difficulty)
     game.run()
         

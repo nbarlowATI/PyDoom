@@ -29,14 +29,14 @@ class ViewRenderer:
         # - a 2D array WIDTHxHEIGHT with each entry being the 
         # distance from the player to the nearest drawn wall at that
         # screen position.
-        self.reset_clip_buffers()
+        self.z_buffer = np.full((WIDTH, HEIGHT), np.inf)
         
     # reset clip buffers every frame
     def reset_clip_buffers(self):
-        self.z_buffer = np.full((HEIGHT, WIDTH), np.inf)
+        self.z_buffer.fill(np.inf)
         # self.clip_top = [0] * WIDTH
         # self.clip_bottom = [HEIGHT - 1] * WIDTH
-        self.wall_depth = [math.inf] * WIDTH
+       # self.wall_depth = [math.inf] * WIDTH
 
 
     def get_colour(self, tex, light_level):
@@ -67,30 +67,39 @@ class ViewRenderer:
             if not (0 <= screen_column < WIDTH):
                 continue
 
-            # depth clipping
-            if sprite.dist > self.wall_depth[screen_column]:
-                continue
-            
-            # try this
-            # col_rect = pg.Rect(i, blit_y, 1, sprite_height)
-            # sprite_col = sprite.scaled_sprite.subsurface(col_rect)
-            # self.screen.blit(sprite_col, (screen_column, blit_y))
-
-            # vertical column clipping
-         #   col_clip_top = self.clip_top[screen_column]
-          #  col_clip_bottom = self.clip_bottom[screen_column]
-
             sprite_col_y1 = blit_y
             sprite_col_y2 = blit_y + sprite_height
 
-         #   clipped_y1 = max(sprite_col_y1, col_clip_top)
-         #   clipped_y2 = min(sprite_col_y2, col_clip_bottom)
-        #    visible_height = clipped_y2 - clipped_y1
-         #   if visible_height > 0:
-             #   src_y = clipped_y1 - sprite_col_y1
-            col_rect = pg.Rect(i, 0, 1, sprite_height)
-            sprite_col = sprite.scaled_sprite.subsurface(col_rect)
-            self.screen.blit(sprite_col, (screen_column, blit_y))
+            for j in range(sprite_height):
+                screen_row = blit_y + j
+                if not (0 <= screen_row < HEIGHT):
+                    continue
+
+                # Check if sprite is closer than geometry at this pixel
+                if sprite.dist < self.z_buffer[screen_column, screen_row]:
+                    # Get the pixel colour from the sprite column
+                    pixel_colour = sprite.scaled_sprite.get_at((i, j))
+
+                    # Skip fully transparent pixels (alpha == 0)
+                    if pixel_colour[:3] == COLOUR_KEY:
+                    
+                        continue
+
+                    # Draw the pixel
+                    self.screen.set_at((screen_column, screen_row), pixel_colour)
+
+
+            # # Occlusion check: only check center y
+            # y_check = blit_y + sprite_height // 2
+            # if not (0 <= y_check < HEIGHT):
+            #     continue
+            
+            # # Depth test against geometry
+            # if sprite.dist > self.z_buffer[screen_column, y_check]:
+            #     continue
+            # col_rect = pg.Rect(i, 0, 1, sprite_height)
+            # sprite_col = sprite.scaled_sprite.subsurface(col_rect)
+            # self.screen.blit(sprite_col, (screen_column, blit_y))
 
     def draw_flat(self, tex_id, light_level, x, y1, y2, world_z):
         if y1 < y2:
@@ -138,6 +147,26 @@ class ViewRenderer:
             clip_bottom = int(min(max(0, self.clip_bottom[x]), HEIGHT-1))
             self.framebuffer[x, clip_top] = (255,0,0)
             self.framebuffer[x, clip_bottom] = (0,0,255)
+
+    def draw_z_buffer(self):
+        """
+        For debugging
+        """
+        zb = self.z_buffer.copy()
+        zb[np.isinf(zb)] = 999.
+
+        # normalize to 0..255
+        max_depth = np.max(zb)
+        norm = (zb / max_depth) * 255
+        # invert
+        norm = 255 - norm
+        img = norm.astype(np.uint8)
+        rgb = np.repeat(img[:,:, None], 3, axis=2)
+        surf = pg.surfarray.make_surface(rgb)
+        self.screen.blit(surf, (0,0))
+
+
+
 
     @staticmethod
     @njit

@@ -47,7 +47,7 @@ thing_id,radius,height,sprite_base,frame_sequence,type,class
 43,16,16,TRE1,A,O,BurntTree
 35,16,16,CBRA,A,O,Candelabra
 41,16,16,CEYE,ABCB,O,EvilEye
-2035,10,42,BAR11,AB,O*,ExplodingBarrel
+2035,10,42,BAR1,AB,O*,ExplodingBarrel
 28,16,16,POL2,A,O,FiveSkulls
 42,16,16,FSKU,ABC,O,FloatingSkull
 2028,16,16,COLU,A,O,FloorLamp
