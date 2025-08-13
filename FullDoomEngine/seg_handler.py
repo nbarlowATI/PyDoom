@@ -1,4 +1,5 @@
 import math
+import numpy as np
 from doomsettings import *
 
 class SegHandler:
@@ -68,13 +69,18 @@ class SegHandler:
         b_draw_ceil = world_front_z1 > 0
         b_draw_floor = world_front_z2 < 0
 
+        # Wall segment vector and length in world space
+        wall_dx = seg.end_vertex[0] - seg.start_vertex[0]
+        wall_dy = seg.end_vertex[1] - seg.start_vertex[1]
+        wall_len = math.hypot(wall_dx, wall_dy)
+        wall_dir = (wall_dx / wall_len, wall_dy / wall_len)
+
         # calculate scaling factors for left and right edges of the wall range
         rw_normal_angle = seg.angle + 90
         offset_angle = rw_normal_angle - self.rw_angle1
 
         hypoteneuse = math.dist(self.player.pos, seg.start_vertex)
         rw_distance = hypoteneuse * math.cos(math.radians(offset_angle))
-
         rw_scale1 = self.scale_from_global_angle(x1, rw_normal_angle, rw_distance)
 
         if math.isclose(offset_angle % 360, 90, abs_tol=1):
@@ -98,23 +104,22 @@ class SegHandler:
         # determine how the wall textures are horizontally aligned
         rw_offset = hypoteneuse * math.sin(math.radians(offset_angle))
         rw_offset += seg.offset + side.x_offset
-
         rw_center_angle = rw_normal_angle - self.player.angle
+
         # determine where on the screen the wall is drawn:
         wall_y1 = H_HEIGHT - world_front_z1 * rw_scale1
         wall_y1_step = -rw_scale_step * world_front_z1
-
         wall_y2 = H_HEIGHT - world_front_z2 * rw_scale1
         wall_y2_step = -rw_scale_step * world_front_z2
 
-        # render
+        # player position
+        player_x, player_y = self.player.pos
+
+        # render loop
         for x in range(x1, x2+1):
             draw_wall_y1 = wall_y1 - 1
             draw_wall_y2 = wall_y2
             # Update clipping buffers
-        #    renderer.clip_top[x] = max(renderer.clip_top[x],draw_wall_y1)
-        #    renderer.clip_bottom[x] = min(renderer.clip_bottom[x], draw_wall_y2)
-            
 
             if b_draw_ceil:
                 cy1 = upper_clip[x] + 1
@@ -126,14 +131,18 @@ class SegHandler:
                 wy2 = int(min(draw_wall_y2, lower_clip[x] -1))
                 if wy1 < wy2:
                     angle = rw_center_angle - self.x_to_angle[x]
-                    texture_column = rw_distance * math.tan(math.radians(angle)) - rw_offset
+                    # Get horizontal distance along wall from texture coordinate logic
+                    wall_offset_along = rw_distance * math.tan(math.radians(angle)) - rw_offset 
+                    # Convert wall offset to wall/ray intersection world coords
+                    intersect_x = seg.start_vertex[0] + wall_dir[0] * wall_offset_along
+                    intersect_y = seg.start_vertex[1] + wall_dir[1] * wall_offset_along
+                    # Raw distance from player to intersection
+                    hit_dist = math.hypot(intersect_x - player_x, intersect_y - player_y)                
                     inv_scale = 1.0 / rw_scale1
                     # update wall_depth buffer
-                    renderer.z_buffer[x, wy1:wy2] = rw_distance
-#                    renderer.z_buffer[x].append([wy1, wy2])
-#                    renderer.wall_depth[x] = min(rw_distance, renderer.wall_depth[x])
+                    renderer.z_buffer[x, wy1:wy2] = hit_dist
                     renderer.draw_wall_col(
-                        framebuffer, wall_texture, texture_column, x, wy1, wy2,
+                        framebuffer, wall_texture, wall_offset_along, x, wy1, wy2,
                         middle_tex_alt, inv_scale, light_level,
                     )
                 
@@ -162,6 +171,14 @@ class SegHandler:
         tex_ceil_id = front_sector.ceil_texture
         tex_floor_id = front_sector.floor_texture
         light_level = front_sector.light_level
+
+        player_x, player_y = self.player.pos
+
+        # Wall segment vector and length in world space
+        wall_dx = seg.end_vertex[0] - seg.start_vertex[0]
+        wall_dy = seg.end_vertex[1] - seg.start_vertex[1]
+        wall_len = math.hypot(wall_dx, wall_dy)
+        wall_dir = (wall_dx / wall_len, wall_dy / wall_len)
 
         # calculate relative plane heights of front and back sector
         world_front_z1 = front_sector.ceil_height - self.player.view_height
@@ -203,6 +220,8 @@ class SegHandler:
         rw_distance = hypoteneuse * math.cos(math.radians(offset_angle))
 
         rw_scale1 = self.scale_from_global_angle(x1, rw_normal_angle, rw_distance)
+        if math.isclose(offset_angle % 360, 90, abs_tol=1):
+            rw_scale1 *= 0.01
         if x2 > x1:
             scale2 = self.scale_from_global_angle(x2, rw_normal_angle, rw_distance)
             rw_scale_step = (scale2 - rw_scale1) / (x2 - x1)
@@ -267,10 +286,18 @@ class SegHandler:
         for x in range(x1, x2 + 1):
             draw_wall_y1 = wall_y1 - 1
             draw_wall_y2 = wall_y2
- 
+            # for z_buffer
+            hit_dist = np.inf
+
             if seg_textured:
                 angle = rw_center_angle - self.x_to_angle[x]
-                texture_column = rw_distance * math.tan(math.radians(angle)) - rw_offset
+                wall_offset_along = rw_distance * math.tan(math.radians(angle)) - rw_offset
+                # Convert wall offset to intersection world coords
+                intersect_x = seg.start_vertex[0] + wall_dir[0] * wall_offset_along
+                intersect_y = seg.start_vertex[1] + wall_dir[1] * wall_offset_along
+                # Raw distance from player to intersection
+                hit_dist = math.hypot(intersect_x - player_x, intersect_y - player_y)
+
                 inv_scale = 1.0 / rw_scale1
 
 
@@ -284,13 +311,18 @@ class SegHandler:
                 
                 wy1 = int(max(draw_upper_wall_y1, upper_clip[x] + 1))
                 wy2 = int(min(draw_upper_wall_y2, lower_clip[x] - 1))
-                # update wall_depth buffer
-                renderer.z_buffer[x, wy1:wy2] = rw_distance
-                renderer.draw_wall_col(
-                    framebuffer, upper_wall_texture, texture_column, x, wy1, wy2,
-                    upper_tex_alt, inv_scale, light_level,
-                )
-                
+                # clamp to screen
+                wy1 = max(0, min(wy1, HEIGHT))
+                wy2 = max(0, min(wy2, HEIGHT))
+                # check that wy2 is bigger than wy1
+                if wy1 < wy2:
+                    # update wall_depth buffer
+                    renderer.z_buffer[x, wy1:wy2] = hit_dist
+                    # draw the column
+                    renderer.draw_wall_col(
+                        framebuffer, upper_wall_texture, wall_offset_along, x, wy1, wy2,
+                        upper_tex_alt, inv_scale, light_level,
+                    )
                 
                 if upper_clip[x] < wy2:
                     upper_clip[x] = wy2
@@ -317,12 +349,18 @@ class SegHandler:
                 
                 wy1 = int(max(draw_lower_wall_y1, upper_clip[x] + 1))
                 wy2 = int(min(draw_lower_wall_y2, lower_clip[x] - 1))
-                # update z buffer
-                renderer.z_buffer[x, wy1:wy2] = rw_distance
-                renderer.draw_wall_col(
-                    framebuffer, lower_wall_texture, texture_column, x, wy1, wy2,
-                    lower_tex_alt, inv_scale, light_level,
-                )
+                # clamp to screen height
+                wy1 = max(0, min(wy1, HEIGHT))
+                wy2 = max(0, min(wy2, HEIGHT))
+                # check that wy2 is bigger than wy1
+                if wy1 < wy2:                    
+                    # update z buffer
+                    renderer.z_buffer[x, wy1:wy2] = hit_dist
+                    # draw the wall column
+                    renderer.draw_wall_col(
+                        framebuffer, lower_wall_texture, wall_offset_along, x, wy1, wy2,
+                        lower_tex_alt, inv_scale, light_level,
+                    )
                 if lower_clip[x] > wy1:
                     lower_clip[x] = wy1
                 portal_y2 += portal_y2_step

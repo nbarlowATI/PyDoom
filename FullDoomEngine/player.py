@@ -91,6 +91,9 @@ class Player:
 
 
     def control(self):
+        # if in debug mode, disable all movement
+        if self.engine.debug_mode:
+            return
         speed = PLAYER_SPEED * self.engine.dt
         rot_speed = PLAYER_ROT_SPEED * self.engine.dt
 
@@ -163,6 +166,9 @@ class Player:
         return pos
 
     def mouse_control(self):
+        # if in debug mode, disable all movement
+        if self.engine.debug_mode:
+            return
         mx, my = pg.mouse.get_pos()
         if mx < MOUSE_BORDER_LEFT or mx > MOUSE_BORDER_RIGHT:
             pg.mouse.set_pos([H_WIDTH, H_HEIGHT])

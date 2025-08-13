@@ -18,6 +18,7 @@ from doomsettings import *
 class DoomEngine:
     def __init__(self, wad_path="wad/DOOM1.wad"):
         self.map_mode = False
+        self.debug_mode = False
         self.wad_path = wad_path
         self.screen = pg.display.set_mode(WIN_RES, pg.SCALED)
         self.framebuffer = pg.surfarray.array3d(self.screen)
@@ -50,6 +51,7 @@ class DoomEngine:
         for door in self.doors.values():
             door.update()
         self.object_handler.update()
+        self.view_renderer.update()
         self.dt = self.clock.tick()
         pg.display.set_caption(f"{self.clock.get_fps()}")
         
@@ -60,17 +62,19 @@ class DoomEngine:
             self.screen.fill('black')
             self.map_renderer.draw()
         else:
-         #   self.view_renderer.draw_occlusion_lines()
             pg.surfarray.blit_array(self.screen, self.framebuffer)
+            
             for npc in self.object_handler.npcs:
                 self.view_renderer.draw_sprite(npc)
             for obj in self.object_handler.objects:
                 self.view_renderer.draw_sprite(obj)
-            self.view_renderer.draw_z_buffer()
+            
             self.view_renderer.draw_weapon(WEAPON_SPRITES[self.player.current_weapon])
             self.view_renderer.draw_status_bar()
             self.view_renderer.draw_doomguy(self.player.face_img)
-
+            if self.debug_mode:
+                self.view_renderer.draw_z_buffer()
+                self.view_renderer.draw_debug_cursor()
             pg.display.flip()  
 
     def check_events(self):
@@ -82,10 +86,27 @@ class DoomEngine:
                     self.player.handle_action()
                 elif pg.K_0 <= e.key <= pg.K_9:
                     self.player.change_weapon(chr(e.key))
+                # print some debug output
                 elif e.key == pg.K_n:
-                    print(f"player position {self.player.pos}")
+                    cursor_x = int(self.view_renderer.debug_cursor[0])
+                    cursor_y = int(self.view_renderer.debug_cursor[1])
+                    z_val = self.view_renderer.z_buffer[cursor_x, cursor_y]
+                    print(f"z-buffer {(cursor_x,cursor_y)} {z_val}")
+                    barrel_dists = []
+                    for obj in self.object_handler.objects:
+                        if obj.sprite_name_base == "BAR1" and obj.dist:
+                           
+                            barrel_dists.append(obj.dist)
+                    if len(barrel_dists) > 0:
+                        print(f"Distance to nearest barrel {min(barrel_dists)}")
+#                    print(f"player position {self.player.pos}")
                 elif e.key == pg.K_m:
                     self.map_mode = not self.map_mode
+                # toggle map mode
+                elif e.key == pg.K_b:
+                    if not self.map_mode:
+                        self.debug_mode = not self.debug_mode
+            # cycle randomly through the different doomguy faces
             if e.type == DOOMGUY_FACE_CHANGE_EVENT:
                 self.player.set_face_image()
 

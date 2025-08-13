@@ -40,6 +40,7 @@ class MapRenderer:
         self.draw_linedefs()
         self.draw_player_pos()
         self.draw_npcs()
+        self.draw_barrels()
         #self.draw_node(node_id=self.engine.bsp.root_node_id)
 
     def draw_vlines(self, x1, x2, sub_sector_id):
@@ -98,6 +99,15 @@ class MapRenderer:
             x = self.remap_x(pos.x)
             y = self.remap_y(pos.y)
             pg.draw.circle(self.engine.screen, 'blue', (x,y), 8)
+
+    def draw_barrels(self):
+        for obj in self.engine.object_handler.objects:
+            if obj.sprite_name_base == "BAR1":
+                pos = obj.pos
+                x = self.remap_x(pos.x)
+                y = self.remap_y(pos.y)
+                pg.draw.circle(self.engine.screen, 'green', (x,y), 7)
+
 
 
     def draw_linedefs(self):

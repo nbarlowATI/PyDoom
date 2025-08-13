@@ -6,7 +6,7 @@ import random
 from random import randrange as rnd
 import pygame as pg
 import pygame.gfxdraw as gfx
-
+from pygame.math import Vector2 as vec2
 
 class ViewRenderer:
     def __init__(self,engine):
@@ -30,7 +30,11 @@ class ViewRenderer:
         # distance from the player to the nearest drawn wall at that
         # screen position.
         self.z_buffer = np.full((WIDTH, HEIGHT), np.inf)
-        
+        # debug cursor - position of a cursor that can be moved around
+        # the screen, and, on demand, give e.g. z-buffer information for
+        # that screen location.
+        self.debug_cursor = (WIDTH//2, HEIGHT //2)
+
     # reset clip buffers every frame
     def reset_clip_buffers(self):
         self.z_buffer.fill(np.inf)
@@ -38,6 +42,10 @@ class ViewRenderer:
         # self.clip_bottom = [HEIGHT - 1] * WIDTH
        # self.wall_depth = [math.inf] * WIDTH
 
+
+    def update(self):
+        if self.engine.debug_mode:
+            self.debug_cursor_control()
 
     def get_colour(self, tex, light_level):
         str_light = str(light_level)
@@ -88,7 +96,6 @@ class ViewRenderer:
                     # Draw the pixel
                     self.screen.set_at((screen_column, screen_row), pixel_colour)
 
-
             # # Occlusion check: only check center y
             # y_check = blit_y + sprite_height // 2
             # if not (0 <= y_check < HEIGHT):
@@ -112,10 +119,12 @@ class ViewRenderer:
                 )
             else:
                 flat_tex = self.textures[tex_id]
-
+                # Pass a *view* of the z-buffer column for this x
+                z_col = self.z_buffer[x, y1:y2+1]
                 self.draw_flat_col(self.framebuffer, flat_tex,
                                    x, y1, y2, light_level, world_z,
-                                   self.player.angle, self.player.pos.x, self.player.pos.y)
+                                   self.player.angle, self.player.pos.x, self.player.pos.y,
+                                   z_col)
                 
     # draw currently selected weapon at the bottom of the screen, but above status bar.
     def draw_weapon(self, sprite_name):
@@ -147,6 +156,35 @@ class ViewRenderer:
             clip_bottom = int(min(max(0, self.clip_bottom[x]), HEIGHT-1))
             self.framebuffer[x, clip_top] = (255,0,0)
             self.framebuffer[x, clip_bottom] = (0,0,255)
+
+    def debug_cursor_control(self):
+        # if in debug mode, disable all movement
+        if not self.engine.debug_mode:
+            return
+        speed = 0.5 * self.engine.dt
+
+        key_state = pg.key.get_pressed()
+        inc = vec2(0)
+        if key_state[pg.K_LEFT]:
+            inc += vec2(-speed,0)
+        if key_state[pg.K_RIGHT]:
+            inc += vec2(speed,0)
+        if key_state[pg.K_UP]:
+            inc += vec2(0, -speed)
+        if key_state[pg.K_DOWN]:
+            inc += vec2(0,speed)
+        if inc.x and inc.y:
+            inc *= 1/math.sqrt(2)
+        self.debug_cursor = (self.debug_cursor[0] + inc.x, self.debug_cursor[1] + inc.y)
+
+    def draw_debug_cursor(self):
+        """
+        for debugging
+        """
+        pg.draw.line(self.engine.screen, (255,0,0), (self.debug_cursor[0], 0), (self.debug_cursor[0], HEIGHT), 3)
+        pg.draw.line(self.engine.screen, (255,0,0), (0, self.debug_cursor[1]), (WIDTH, self.debug_cursor[1]), 3)
+        pg.draw.circle(self.engine.screen, 'red', (self.debug_cursor), 4)
+
 
     def draw_z_buffer(self):
         """
@@ -192,12 +230,13 @@ class ViewRenderer:
     @staticmethod
     @njit(fastmath=True)
     def draw_flat_col(screen, flat_tex, x, y1, y2, light_level, world_z,
-                      player_angle, player_x, player_y):
+                      player_angle, player_x, player_y, z_col):
         player_dir_x = math.cos(math.radians(player_angle))
         player_dir_y = math.sin(math.radians(player_angle))
 
-        for iy in range(y1, y2 + 1):
+        for i, iy in enumerate(range(y1, y2 + 1)):
             z = H_WIDTH * world_z / (H_HEIGHT - iy)
+            z_col[i] = z  # store the depth in the z-buffer
 
             px = player_dir_x * z + player_x
             py = player_dir_y * z + player_y
