@@ -1,10 +1,17 @@
+import json
+import threading
 from sprite_object import *
 from random import randint, random, choice
+from settings import *
+from speechbubble import *
+from events import NPC_RESPONSE_EVENT
 
 class NPC(AnimatedSprite):
     def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5),
                 scale=0.6, shift=0.38, animation_time=180):
         super().__init__(game, path, pos, scale, shift, animation_time)
+        self.id = "baseNPC"
+        self.backstory = ""
         self.attack_images = self.get_images(self.path + '/attack')
         self.death_images = self.get_images(self.path + '/death')
         self.idle_images = self.get_images(self.path + '/idle')
@@ -12,6 +19,7 @@ class NPC(AnimatedSprite):
         self.walk_images = self.get_images(self.path+ '/walk')
 
         self.attack_dist = randint(3, 6)
+        self.conversation_dist = 6
         self.speed = 0.03
         self.size = 10
         self.health = 100
@@ -22,6 +30,9 @@ class NPC(AnimatedSprite):
         self.ray_cast_value = False
         self.frame_counter = 0
         self.player_search_trigger = False
+        self.in_conversation = False
+        self.talking = False
+        self.thinking = False
 
     def update(self):
         self.check_animation_time()
@@ -41,6 +52,8 @@ class NPC(AnimatedSprite):
             self.y += dy
 
     def movement(self):
+        if self.in_conversation:
+            return
         next_pos = self.game.pathfinding.get_path(self.map_pos, self.game.player.map_pos)
         next_x, next_y = next_pos
         
@@ -57,6 +70,31 @@ class NPC(AnimatedSprite):
             self.game.sound.npc_shot.play()
             if random() < self.accuracy:
                 self.game.player.get_damage(self.attack_damage)
+
+    def talk(self):
+        if not self.talking and not self.thinking:
+            print(f"{self.id} about to talk!")
+            print(f"{self.game.conversation.conversation_so_far}")
+            self.talking = True
+            self.thinking = True
+            # Start thread to generate NPC response
+            threading.Thread(
+                target=self.prepare_response,
+                args=(self.backstory, self.game.conversation.conversation_so_far.copy()),  # copy to avoid mutation during thread
+                daemon=True
+            ).start()
+            self.game.conversation.talk(self, "...")
+            self.game.sound.npc_pain.play()
+
+    def prepare_response(self, backstory, conversation_history):
+        response = self.game.ai_talker.get_response(backstory, conversation_history)
+        response_json = response["message"]["content"]
+        try:
+            response_text = json.loads(response["message"]["content"])["text"]
+        except:
+            response_text = response_json
+        pg.event.post(pygame.event.Event(NPC_RESPONSE_EVENT, {"text": response_text}))
+
 
     def animate_death(self):
         if not self.alive:
@@ -80,7 +118,16 @@ class NPC(AnimatedSprite):
                 self.health -= self.game.weapon.damage
                 self.check_health()
 
-
+    def check_in_conversation(self):
+        if not self.game.conversation:
+            return
+        if self.in_conversation and self.game.conversation.now_talking.id == self.id and not self.thinking:
+            self.talk()
+            return 
+        if self.ray_cast_value and self.game.player.in_conversation and self.dist < self.conversation_dist:
+            self.game.conversation.add_participant(self)
+            self.in_conversation = True
+        
     def check_health(self):
         if self.health < 1:
             self.alive= False
@@ -90,13 +137,15 @@ class NPC(AnimatedSprite):
         if self.alive:
             self.ray_cast_value = self.ray_cast_player_npc()
             self.check_hit_in_npc()
+            self.check_in_conversation()
             if self.pain:
                 self.animate_pain()
             elif self.ray_cast_value:
                 self.player_search_trigger = True
                 if self.dist < self.attack_dist:
-                    self.animate(self.attack_images)
-                    self.attack()
+                    if not self.in_conversation:
+                        self.animate(self.attack_images)
+                        self.attack()
                 else:
                     self.animate(self.walk_images)
                     self.movement()
@@ -185,11 +234,15 @@ class NPC(AnimatedSprite):
 class SoldierNPC(NPC):
     def __init__(self, game, path='resources/sprites/npc/soldier/0.png', pos=(10.5, 5.5), scale=0.6, shift=0.38, animation_time=180):
         super().__init__(game, path, pos, scale, shift, animation_time)
+        self.id = "soldier"
+        self.backstory = "My name is Johnny and I was a US Marine back on Earth.  I really dislike being on this base, and want to get home to my family.  I really like ice cream and cricket."
 
 
 class CacoDemonNPC(NPC):
     def __init__(self, game, path='resources/sprites/npc/caco_demon/0.png', pos=(10.5, 6.5), scale=0.7, shift=0.27, animation_time=250):
         super().__init__(game, path, pos, scale, shift, animation_time)
+        self.id = "cacodemon"
+        self.backstory = "My name is Dwayne and I was born here in Hell.  I am an anarchist, and would like to overthrow the Cyberdemon, but I am quite lazy and do like playing table football."
         self.attack_dist = 1.0
         self.health = 150
         self.attack_damage = 25

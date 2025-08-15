@@ -23,6 +23,7 @@ class ObjectRenderer:
         self.draw_background()
         self.render_game_objects()
         self.draw_player_health()
+        self.draw_speech_bubble()
 
     def game_over(self):
         self.screen.blit(self.game_over_image, (0, 0))
@@ -42,6 +43,10 @@ class ObjectRenderer:
         self.screen.blit(self.sky_image, (-self.sky_offset + WIDTH, 0))
         # floor
         pg.draw.rect(self.screen, FLOOR_COLOUR, (0, HALF_HEIGHT, WIDTH, HEIGHT))
+
+    def draw_speech_bubble(self):
+        if self.game.conversation and self.game.conversation.speech_bubble:
+            self.game.conversation.speech_bubble.draw()
 
     def render_game_objects(self):
         list_objects = sorted(self.game.raycasting.objects_to_render, key=lambda t: t[0], reverse=True)

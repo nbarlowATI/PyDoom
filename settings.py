@@ -1,4 +1,5 @@
 import math
+import pygame
 
 # game settings
 RES = WIDTH, HEIGHT = 1600, 900
@@ -33,3 +34,5 @@ SCALE = WIDTH // NUM_RAYS
 
 TEXTURE_SIZE = 256
 HALF_TEXTURE_SIZE = TEXTURE_SIZE // 2
+
+OLLAMA_MODEL = "llama3.2:latest"
