@@ -13,7 +13,7 @@ class WADData:
     }
 
     SOUND_EFFECT_NAMES = [
-        "DSDOROPN"
+        "DSDOROPN", "DSPISTOL", "DSSHOTGN"
     ]
 
     def __init__(self, engine, map_name):

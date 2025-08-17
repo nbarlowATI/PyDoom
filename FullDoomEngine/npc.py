@@ -8,11 +8,11 @@ from thing import Thing
 class NPCState(Enum):
     standing = 0
     walking = 1
-    shooting = 2
-    getting_hit = 3
-    dying = 4
-    dead = 5
-
+    chasing = 2
+    shooting = 3
+    getting_hit = 4
+    dying = 5
+    dead = 6
 
 
 class NPC(Thing):

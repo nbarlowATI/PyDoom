@@ -13,3 +13,12 @@ class Ornament(Thing):
     def update(self):
         super().update()
 
+
+class ExplodingBarrel(Thing):
+    def __init__(self, engine, pos, angle, thing_info):
+        super().__init__(self, engine, pos, angle, thing_info)
+        self.extra_y_offset = 30
+        self.is_exploding = False
+
+    def explode(self):
+        pass

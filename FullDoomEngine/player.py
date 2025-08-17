@@ -6,8 +6,6 @@ import pygame as pg
 
 from doomsettings import *
 from data_types import Seg
-#from door import Door
-
 
 class Player:
     def __init__(self, engine):
@@ -29,6 +27,8 @@ class Player:
         self.weapon_y_offset = 0
         self.health = 100
         self.face_img = 'STFST00'
+        self.shooting = False
+        self.reloading = False
         
 
     def get_view_height(self):
@@ -63,6 +63,13 @@ class Player:
                 'STFEVL0',
                 ]
             )
+
+    def handle_fire_event(self, event):
+        
+        if event.button == 1 and not self.shooting and not self.reloading:
+            self.engine.weapon.play_sound()
+            self.shot = True
+            self.reloading = True
 
 
     def update(self):
@@ -146,23 +153,19 @@ class Player:
                     if door.is_open or door.is_opening:
                         # door is open
                         pos += movement
- #                       print(f"can move through door {pos} {movement}")
                         return pos
                 else:
                     pass
- #                   print(f"known doors {self.engine.doors.keys()} this is {collision_seg.linedef_id}")
             elif wall_type == WALL_TYPE.SOLID_WALL:
                 wall_vec = collision_seg.start_vertex - collision_seg.end_vertex
                 wall_vec_norm = wall_vec / wall_vec.magnitude()
                 dot_product = movement.dot(wall_vec_norm)
                 pos += dot_product * wall_vec_norm
- #               print("solid wall")
+
             elif wall_type == WALL_TYPE.IMPASSABLE:
                 # likely a passable wall behind - just break out of the loop
                 # rather than trying to figure out how to slide.
-   #             print("impassable wall")
                 return pos
- #       print(f" returning pos {pos}")
         return pos
 
     def mouse_control(self):

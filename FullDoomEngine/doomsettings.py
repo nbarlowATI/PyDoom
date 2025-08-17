@@ -63,6 +63,13 @@ WEAPON_SPRITES = {
 }
 MAX_WEAPON_OFFSET = 200
 
+SOUNDS = {
+    'pistol': "DSPISTOL",
+    'shotgun': "DSSHOTGN",
+    'barrel_explode': "DSBRSD:",
+    'door_open': "DSDOROPN"
+}
+
 # sprites in the WAD file are larger than world space
 # e.g. soldier is 220 pixels vs 56 for canonical doom sprite.
 SPRITE_PIX_RATIO = 56 / 220

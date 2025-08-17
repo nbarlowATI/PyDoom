@@ -10,6 +10,7 @@ from raycasting import RayCasting
 from seg_handler import SegHandler
 from sounds import SoundEffect
 from view_renderer import ViewRenderer
+from weapon import Weapon
 
 from events import *
 from doomsettings import *
@@ -31,6 +32,7 @@ class DoomEngine:
         self.wad_data = WADData(self, map_name)
         self.map_renderer = MapRenderer(self)
         self.player = Player(self)
+        self.weapon = Weapon(self)
         self.bsp = BSP(self)
         self.raycaster = RayCasting(self)
         self.seg_handler = SegHandler(self)
@@ -109,6 +111,9 @@ class DoomEngine:
             # cycle randomly through the different doomguy faces
             if e.type == DOOMGUY_FACE_CHANGE_EVENT:
                 self.player.set_face_image()
+            # fire weapon
+            if e.type == pg.MOUSEBUTTONDOWN:
+                self.player.handle_fire_event(e)
 
 
     def run(self):

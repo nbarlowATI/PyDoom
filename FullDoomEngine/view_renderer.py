@@ -38,10 +38,6 @@ class ViewRenderer:
     # reset clip buffers every frame
     def reset_clip_buffers(self):
         self.z_buffer.fill(np.inf)
-        # self.clip_top = [0] * WIDTH
-        # self.clip_bottom = [HEIGHT - 1] * WIDTH
-       # self.wall_depth = [math.inf] * WIDTH
-
 
     def update(self):
         if self.engine.debug_mode:
@@ -90,23 +86,10 @@ class ViewRenderer:
 
                     # Skip fully transparent pixels (alpha == 0)
                     if pixel_colour[:3] == COLOUR_KEY:
-                    
                         continue
 
                     # Draw the pixel
                     self.screen.set_at((screen_column, screen_row), pixel_colour)
-
-            # # Occlusion check: only check center y
-            # y_check = blit_y + sprite_height // 2
-            # if not (0 <= y_check < HEIGHT):
-            #     continue
-            
-            # # Depth test against geometry
-            # if sprite.dist > self.z_buffer[screen_column, y_check]:
-            #     continue
-            # col_rect = pg.Rect(i, 0, 1, sprite_height)
-            # sprite_col = sprite.scaled_sprite.subsurface(col_rect)
-            # self.screen.blit(sprite_col, (screen_column, blit_y))
 
     def draw_flat(self, tex_id, light_level, x, y1, y2, world_z):
         if y1 < y2:
@@ -127,8 +110,11 @@ class ViewRenderer:
                                    z_col)
                 
     # draw currently selected weapon at the bottom of the screen, but above status bar.
-    def draw_weapon(self, sprite_name):
-        img = self.sprites[sprite_name]
+    def draw_weapon(self, sprite_name=None):
+        if sprite_name:
+            img = self.sprites[sprite_name]
+        else:
+            img = self.engine.weapon.current_sprite
         x_pos = H_WIDTH - img.get_width() //2
         y_pos = HEIGHT - img.get_height() - self.status_bar.get_height()+self.player.weapon_y_offset
         pos = (x_pos, y_pos)
@@ -145,17 +131,6 @@ class ViewRenderer:
         img = self.doomguy[sprite_name]
         pos = (H_WIDTH - img.get_width() //2,HEIGHT - img.get_height() )
         self.screen.blit(img, pos)
-
-    def draw_occlusion_lines(self):
-        """
-        For debugging
-        """
-        for x in range(WIDTH):
-            # ensure clip buffers are in the right range
-            clip_top = int(min(max(0, self.clip_top[x]), HEIGHT-1))
-            clip_bottom = int(min(max(0, self.clip_bottom[x]), HEIGHT-1))
-            self.framebuffer[x, clip_top] = (255,0,0)
-            self.framebuffer[x, clip_bottom] = (0,0,255)
 
     def debug_cursor_control(self):
         # if in debug mode, disable all movement
