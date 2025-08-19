@@ -142,14 +142,11 @@ class Player:
         pos = self.pos
         for collision_seg in collision_segs:
             wall_type = check_segment(collision_seg)
- #           print(f"wall type {wall_type}")
             if wall_type == WALL_TYPE.PASSABLE:
                 pos += movement
- #               print(f"passable wall {pos} {movement}")
             elif wall_type == WALL_TYPE.DOOR:
                 if collision_seg.linedef_id in self.engine.doors:
                     door = self.engine.doors[collision_seg.linedef_id]
- #                   print(f"door open? {door.is_open} {door.is_opening} {door.is_closed} {door.is_closing}")
                     if door.is_open or door.is_opening:
                         # door is open
                         pos += movement
