@@ -112,13 +112,16 @@ class ViewRenderer:
     # draw currently selected weapon at the bottom of the screen, but above status bar.
     def draw_weapon(self, sprite_name=None):
         if sprite_name:
-            img = self.sprites[sprite_name]
+            imgs = [self.sprites[sprite_name]]
         else:
-            img = self.engine.weapon.current_sprite
-        x_pos = H_WIDTH - img.get_width() //2
-        y_pos = HEIGHT - img.get_height() - self.status_bar.get_height()+self.player.weapon_y_offset
-        pos = (x_pos, y_pos)
-        self.screen.blit(img, pos)
+            # might be more than one sprite, e.g. muzzle flash overlaid on weapon.
+            imgs = self.engine.weapon.current_sprite
+        # x_pos = H_WIDTH - img.get_width() //2
+        # y_pos = HEIGHT - img.get_height() - self.status_bar.get_height()+self.player.weapon_y_offset
+        # pos = (x_pos, y_pos)
+        pos = self.engine.weapon.pos
+        for img in imgs:
+            self.screen.blit(img, pos)
 
     # draw the status bar at the bottom of the screen
     def draw_status_bar(self):

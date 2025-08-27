@@ -47,7 +47,7 @@ class DoomEngine:
         # reset view renderer's clip buffers, used to correctly occlude sprites
         self.view_renderer.reset_clip_buffers()
         self.player.update()
-        
+        self.weapon.update()
         self.seg_handler.update()
         self.bsp.update()
         for door in self.doors.values():
