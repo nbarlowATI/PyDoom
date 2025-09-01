@@ -32,13 +32,14 @@ class DoomEngine:
         self.wad_data = WADData(self, map_name)
         self.map_renderer = MapRenderer(self)
         self.player = Player(self)
-        self.weapon = Weapon(self)
+        
         self.bsp = BSP(self)
         self.raycaster = RayCasting(self)
         self.seg_handler = SegHandler(self)
         self.view_renderer = ViewRenderer(self)
         self.object_handler = ObjectHandler(self)
         self.object_handler.add_objects_npcs(difficulty)
+        self.weapon = Weapon(self)
         self.doors = {}
         # set timer to change doomguy face every 2s
         pg.time.set_timer(DOOMGUY_FACE_CHANGE_EVENT, 2000)
@@ -71,7 +72,7 @@ class DoomEngine:
             for obj in self.object_handler.objects:
                 self.view_renderer.draw_sprite(obj)
             
-            self.view_renderer.draw_weapon(WEAPON_SPRITES[self.player.current_weapon])
+            self.view_renderer.draw_weapon()
             self.view_renderer.draw_status_bar()
             self.view_renderer.draw_doomguy(self.player.face_img)
             if self.debug_mode:

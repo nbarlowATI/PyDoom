@@ -115,7 +115,7 @@ class ViewRenderer:
             imgs = [self.sprites[sprite_name]]
         else:
             # might be more than one sprite, e.g. muzzle flash overlaid on weapon.
-            imgs = self.engine.weapon.current_sprite
+            imgs = self.engine.weapon.current_sprites
         # x_pos = H_WIDTH - img.get_width() //2
         # y_pos = HEIGHT - img.get_height() - self.status_bar.get_height()+self.player.weapon_y_offset
         # pos = (x_pos, y_pos)

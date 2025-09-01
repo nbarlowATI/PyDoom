@@ -1,3 +1,4 @@
+from collections import deque
 import math
 import pygame as pg
 from doomsettings import SOUNDS, H_WIDTH, HEIGHT, PLAYER_STEP_FREQUENCY, WEAPON_BOB_X_AMPLITUDE, WEAPON_BOB_Y_AMPLITUDE
@@ -11,6 +12,11 @@ class Weapon:
             "pistol": "PIS", 
             "shotgun": "SHT"
         }
+        self.weapon_sprites = {}
+        self.muzzle_flash_sprites = {}
+        for k, v in self.sprite_bases.items():
+            self.weapon_sprites[k] = deque([s for s in self.engine.view_renderer.sprites if s.startswith(f"{v}G")])
+            self.muzzle_flash_sprites[k] = deque([s for s in self.engine.view_renderer.sprites if s.startswith(f"{v}F")])
         self.shooting = False
         self.reloading = False
         self.animation_time_prev = pg.time.get_ticks()
@@ -27,11 +33,20 @@ class Weapon:
         self.pos = (0,0)
         self.current_sprite_names = ["PISGA0"]
         self.current_sprites = []
+        self.frame_counter = 0
 
     def update(self):
         self.set_current_sprite()
         self.set_weapon_offsets()
         self.set_sprite_position()
+        self.check_animation_time()
+        self.animate_shot()
+
+    def animate_shot(self):
+        if self.reloading or self.shooting:
+            if self.animation_trigger:
+                self.frame_counter += 1
+
 
     def set_sprite_position(self):
         if len(self.current_sprites) == 0:
@@ -44,6 +59,26 @@ class Weapon:
         if not self.shooting and not self.reloading:
             sprite_name = f"{self.sprite_bases[self.current_weapon]}GA0"
             self.current_sprites = [self.engine.view_renderer.sprites[sprite_name]]
+        if self.shooting:
+            if self.frame_counter == len(self.muzzle_flash_sprites[self.current_weapon]):
+                self.shooting = False
+                self.reloading = True
+            else:                             
+                base_sprite_name = self.weapon_sprites[self.current_weapon][self.frame_counter]
+                flash_sprite_name = self.muzzle_flash_sprites[self.current_weapon][self.frame_counter]
+                self.current_sprites = [
+                    self.engine.view_renderer.sprites[base_sprite_name],
+                    self.engine.view_renderer.sprites[flash_sprite_name]
+                ]
+        if self.reloading:
+            if self.frame_counter == len(self.weapon_sprites[self.current_weapon]):
+                self.reloading = False
+                self.frame_counter = 0
+            else:
+                base_sprite_name = self.weapon_sprites[self.current_weapon][self.frame_counter]
+                self.current_sprites = [
+                    self.engine.view_renderer.sprites[base_sprite_name],
+                ]
 
     def play_sound(self):
         current_weapon = self.engine.player.current_weapon

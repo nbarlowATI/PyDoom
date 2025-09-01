@@ -65,11 +65,9 @@ class Player:
             )
 
     def handle_fire_event(self, event):
-        
-        if event.button == 1 and not self.shooting and not self.reloading:
+        if event.button == 1 and not self.engine.weapon.shooting and not self.engine.weapon.reloading:
             self.engine.weapon.play_sound()
-            self.shot = True
-            self.reloading = True
+            self.engine.weapon.shooting = True
 
 
     def update(self):
