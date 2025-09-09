@@ -77,7 +77,7 @@ class Player:
         self.mouse_control()
         if self.active_door:
             self.active_door.update()
-        if self.selected_weapon != self.current_weapon \
+        if self.selected_weapon != self.engine.weapon.current_weapon \
             and not self.lowering_weapon:
             self.lowering_weapon = True
         if self.raising_weapon:
@@ -89,7 +89,7 @@ class Player:
             if self.weapon_y_offset >= MAX_WEAPON_OFFSET:
                 self.lowering_weapon = False
                 self.raising_weapon = True
-                self.current_weapon = self.selected_weapon
+                self.engine.weapon.current_weapon = self.selected_weapon
             else:
                 self.weapon_y_offset += WEAPON_CHANGE_SPEED
     

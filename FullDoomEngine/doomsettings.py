@@ -56,12 +56,12 @@ SAMPLE_RATE = 11025
 
 # sprites
 WEAPON_BUTTONS = {
-    '1' : "hand",
+    '1' : "none",
     '2' : "pistol",
     '3' : "shotgun"
 }
 WEAPON_SPRITES = {
-    'hand': 'PUNGA0',
+    'none': 'PUNGA0',
     'pistol' : 'PISGA0',
     'shotgun' : 'SHTGA0',
 }

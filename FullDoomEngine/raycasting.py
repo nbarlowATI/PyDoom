@@ -92,3 +92,15 @@ class RayCasting:
             return vec2(hit_x, hit_y), t1
         return None
 
+    def cast_shot(self, start_pos, direction, max_distance):
+        """
+        Ray cast that looks for intersections with sprites, if in 
+        front of the nearest wall.
+        """
+
+        # normalise direction
+        dir_len = math.hypot(direction.x, direction.y)
+        ray_dir = direction / dir_len
+
+        wall_seg = self.cast_ray(start_pos, direction, max_distance)
+        wall_dist = None
