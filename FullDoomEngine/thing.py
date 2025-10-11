@@ -18,6 +18,8 @@ class Thing:
         self.orig_image_size = None
         self.clip_top = [0] * WIDTH
         self.clip_bottom = [HEIGHT -1] * WIDTH
+        self.shootable = False
+        self.line_of_sight = False
 
     def pre_cache(self):
         """

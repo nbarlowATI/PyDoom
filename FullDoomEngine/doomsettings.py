@@ -65,12 +65,25 @@ WEAPON_SPRITES = {
     'pistol' : 'PISGA0',
     'shotgun' : 'SHTGA0',
 }
+
+WEAPON_DAMAGE = {
+    'none': 0,
+    'pistol': 20,
+    'shotgun': 50
+}
+
+WEAPON_RANGE = {
+    'none': 500,
+    'pistol': 2000,
+    'shotgun': 500
+}
+
 MAX_WEAPON_OFFSET = 200
 
 SOUNDS = {
     'pistol': "DSPISTOL",
     'shotgun': "DSSHOTGN",
-    'barrel_explode': "DSBRSD:",
+    'barrel_explode': "DSBAREXP",
     'door_open': "DSDOROPN"
 }
 

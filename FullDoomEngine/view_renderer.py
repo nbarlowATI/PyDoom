@@ -66,6 +66,11 @@ class ViewRenderer:
         sprite_height = sprite.scaled_sprite.get_height()
         blit_x, blit_y = sprite.blit_pos
 
+        # Flag will be set to true if sprite is drawn in central column of screen
+        shootable = False
+        # Flag will be set to true if sprite is drawn at all.
+        line_of_sight = False
+
         for i in range(sprite_width):
             screen_column = blit_x + i
             if not (0 <= screen_column < WIDTH):
@@ -81,6 +86,11 @@ class ViewRenderer:
 
                 # Check if sprite is closer than geometry at this pixel
                 if sprite.dist < self.z_buffer[screen_column, screen_row]:
+
+                    # set flags to say whether npc is in our sights and vice/versa
+                    line_of_sight = True
+                    if abs(screen_column - H_WIDTH) < 10:
+                        shootable = True
                     # Get the pixel colour from the sprite column
                     pixel_colour = sprite.scaled_sprite.get_at((i, j))
 
@@ -90,6 +100,10 @@ class ViewRenderer:
 
                     # Draw the pixel
                     self.screen.set_at((screen_column, screen_row), pixel_colour)
+  
+        sprite.shootable = shootable
+        sprite.line_of_sight = line_of_sight
+        
 
     def draw_flat(self, tex_id, light_level, x, y1, y2, world_z):
         if y1 < y2:

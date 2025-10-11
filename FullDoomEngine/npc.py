@@ -19,8 +19,13 @@ class NPC(Thing):
     def __init__(self, engine, pos, angle):
         super().__init__(engine, pos, angle)
         self.engine = engine
-
         self.state = NPCState.standing
+        self.shootable = False
+        self.line_of_sight = False
+
+    def update(self):
+        super().update()
+ 
 
 
 class ZombieMan(NPC):
@@ -38,6 +43,8 @@ class ZombieMan(NPC):
 
     def update(self):
         super().update()
+        if self.shootable:
+            print(f"Zombieman just became shootable! {self.dist}")
 
 
 class ShotgunGuy(NPC):
@@ -56,6 +63,8 @@ class ShotgunGuy(NPC):
 
     def update(self):
         super().update()
+        if self.shootable:
+            print(f"Shotgunguy just became shootable! {self.dist}")
 
 
 class Imp(NPC):
@@ -74,5 +83,6 @@ class Imp(NPC):
 
     def update(self):
         super().update()
-
+        if self.shootable:
+            print("Imp just became shootable!")
 

@@ -3,7 +3,7 @@ from pygame.math import Vector2 as vec2
 import clevercsv
 
 from collectible import Collectible
-from ornament import Ornament
+from ornament import Ornament, ExplodingBarrel
 from npc import NPC, ZombieMan, ShotgunGuy, Imp
 
 class ObjectHandler:
@@ -75,7 +75,10 @@ class ObjectHandler:
         self.objects.append(Collectible(self.engine, thing.pos, thing.angle, thing_info))
 
     def add_ornament(self, thing, thing_info):
-        self.objects.append(Ornament(self.engine, thing.pos, thing.angle, thing_info))
+        if thing_info["class"] == "ExplodingBarrel":
+            self.objects.append(ExplodingBarrel(self.engine, thing.pos, thing.angle, thing_info))
+        else:
+            self.objects.append(Ornament(self.engine, thing.pos, thing.angle, thing_info))
 
 
     def update(self):
