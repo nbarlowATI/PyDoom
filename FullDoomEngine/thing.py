@@ -20,19 +20,24 @@ class Thing:
         self.clip_bottom = [HEIGHT -1] * WIDTH
         self.shootable = False
         self.line_of_sight = False
+        self.exists = True
 
-    def pre_cache(self):
+    def pre_cache(self, name_base):
         """
         Upon instantiation, calculate and store all sizes
         of all frames/angles of the sprite in the object handler.
         Scale in increments of 8 pixels
+
+        Parameters
+        ==========
+        name_base: 4-letter sprite name base.
         """
         # if sprites for this monster type already cached, just return.
-        if self.sprite_name_base in self.engine.object_handler.sprite_cache:
+        if name_base in self.engine.object_handler.sprite_cache:
             return
         # otherwise, find all angles and scales, and store in object handler's sprite cache
         sprite_cache = {}
-        sprites = {k: v for k, v in self.engine.view_renderer.asset_data.sprites.items() if k.startswith(self.sprite_name_base)}
+        sprites = {k: v for k, v in self.engine.view_renderer.asset_data.sprites.items() if k.startswith(name_base)}
         for k, v in sprites.items():
             img_size = v.get_size()
             aspect_ratio = img_size[0]/img_size[1]
@@ -51,7 +56,7 @@ class Thing:
             for height in range(8, int(max_height), 8):
                 img = pg.transform.scale(v,(height*aspect_ratio, height))
                 sprite_cache[frame][view][height] = img
-        self.engine.object_handler.sprite_cache[self.sprite_name_base] = sprite_cache
+        self.engine.object_handler.sprite_cache[name_base] = sprite_cache
 
     def calculate_angle(self):
         """
@@ -76,8 +81,10 @@ class Thing:
         return rotation_index
     
     def update(self):
-        self.scaled_sprite, self.blit_pos, self.dist = self.scale_and_position()
-        
+        if self.exists:
+            self.scaled_sprite, self.blit_pos, self.dist = self.scale_and_position()
+        else:
+            self.scaled_sprite = None
 
     def get_y_offset(self, proj_plane_dist, view_y):
         """

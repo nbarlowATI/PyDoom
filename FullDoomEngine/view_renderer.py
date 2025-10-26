@@ -195,9 +195,6 @@ class ViewRenderer:
         surf = pg.surfarray.make_surface(rgb)
         self.screen.blit(surf, (0,0))
 
-
-
-
     @staticmethod
     @njit
     def draw_column(framebuffer, x, y1, y2, colour):

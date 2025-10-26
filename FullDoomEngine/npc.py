@@ -39,7 +39,7 @@ class ZombieMan(NPC):
         # found by trial and error - offset to match up with ground.
         self.extra_y_offset = 20
         # cache the scaled textures.
-        self.pre_cache()
+        self.pre_cache(self.sprite_name_base)
 
     def update(self):
         super().update()
@@ -59,7 +59,7 @@ class ShotgunGuy(NPC):
         # found by trial and error - offset to match up with ground.
         self.extra_y_offset = 20
         # cache the scaled textures.
-        self.pre_cache()
+        self.pre_cache(self.sprite_name_base)
 
     def update(self):
         super().update()
@@ -79,7 +79,7 @@ class Imp(NPC):
         # found by trial and error - offset to match up with ground.
         self.extra_y_offset = 20
         # cache the scaled textures.
-        self.pre_cache()
+        self.pre_cache(self.sprite_name_base)
 
     def update(self):
         super().update()

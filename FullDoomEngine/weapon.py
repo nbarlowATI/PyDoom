@@ -33,7 +33,6 @@ class Weapon:
         self.pos = (0,0)
         self.current_sprite_names = ["PISGA0"]
         self.current_sprites = []
-        self.frame_counter = 0
 
     def update(self):
         self.set_current_sprite()

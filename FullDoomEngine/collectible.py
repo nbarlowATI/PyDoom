@@ -7,7 +7,7 @@ class Collectible(Thing):
         self.sprite_name_base = thing_info["sprite_base"]
         self.world_height = float(thing_info["height"])
         self.radius = float(thing_info["radius"])
-        self.pre_cache()
+        self.pre_cache(self.sprite_name_base)
         self.extra_y_offset = 20
 
     def update(self):
