@@ -84,7 +84,9 @@ SOUNDS = {
     'pistol': "DSPISTOL",
     'shotgun': "DSSHOTGN",
     'barrel_explode': "DSBAREXP",
-    'door_open': "DSDOROPN"
+    'door_open': "DSDOROPN",
+    'pain': "DSPOSACT",
+    'death': "DSPOSDTH"
 }
 
 # sprites in the WAD file are larger than world space

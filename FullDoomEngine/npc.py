@@ -22,18 +22,24 @@ class NPC(Thing):
         self.state = NPCState.standing
         self.shootable = False
         self.line_of_sight = False
+        self.health = 100
 
     def update(self):
         super().update()
- 
+        if self.shootable and self.engine.weapon.shooting:
+            self.health -= WEAPON_DAMAGE[self.engine.player.current_weapon]
+            self.state = NPCState.getting_hit
 
 
 class ZombieMan(NPC):
     def __init__(self, engine, pos, angle):
         super().__init__(engine, pos, angle)
         self.sprite_name_base = "POSS"
-        self.standing_frame_suffix = "A"
-        self.walking_frame_suffixes = ["B","C","D","E"]
+        self.standing_frame_suffixes = ["A"]
+        self.walking_frame_suffixes = ["B","C","D"]
+        self.hit_frame_suffix = ["E"]
+        self.dead_frame_suffixes = ["G","H", "I", "K"]
+        self.gib_frame_suffixes = ["K", "L", "M"]
         # base height in pixels
         self.world_height = 56
         # found by trial and error - offset to match up with ground.
@@ -45,13 +51,15 @@ class ZombieMan(NPC):
         super().update()
         if self.shootable:
             print(f"Zombieman just became shootable! {self.dist}")
+        if self.getting_hit:
+            print(f"Zombieman just got hit")
 
 
 class ShotgunGuy(NPC):
     def __init__(self, engine, pos, angle):
         super().__init__(engine, pos, angle)
         self.sprite_name_base = "SPOS"
-        self.standing_frame_suffix = "A"
+        self.standing_frame_suffixes = ["A"]
         self.walking_frame_suffixes = ["B","C","D","E"]
         # base height in pixels
         self.world_height = 56
@@ -71,7 +79,7 @@ class Imp(NPC):
     def __init__(self, engine, pos, angle):
         super().__init__(engine, pos, angle)
         self.sprite_name_base = "TROO"
-        self.standing_frame_suffix = "A"
+        self.standing_frame_suffixes = ["A"]
         self.walking_frame_suffixes = ["B","C","D","E"]
         # base height in pixels
         self.world_height = 56
@@ -85,4 +93,6 @@ class Imp(NPC):
         super().update()
         if self.shootable:
             print("Imp just became shootable!")
+        if self.getting_hit:
+            print(f"Zombieman just got hit")
 
