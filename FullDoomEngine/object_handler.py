@@ -11,6 +11,7 @@ class ObjectHandler:
         self.engine = engine
         self.npcs = []
         self.objects = []
+        self.projectiles = []
 
 
     def add_objects_npcs(self, difficulty):
@@ -87,5 +88,9 @@ class ObjectHandler:
 
         for object in self.objects:
             object.update()
+
+        for projectile in self.projectiles:
+            projectile.update()
+        self.projectiles = [p for p in self.projectiles if p.exists]
 
 

@@ -71,6 +71,8 @@ class DoomEngine:
                 self.view_renderer.draw_sprite(npc)
             for obj in self.object_handler.objects:
                 self.view_renderer.draw_sprite(obj)
+            for proj in self.object_handler.projectiles:
+                self.view_renderer.draw_sprite(proj)
             
             self.view_renderer.draw_weapon()
             self.view_renderer.draw_status_bar()

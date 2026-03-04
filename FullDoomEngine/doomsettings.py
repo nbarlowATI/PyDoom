@@ -80,6 +80,10 @@ WEAPON_RANGE = {
 
 MAX_WEAPON_OFFSET = 200
 
+IMP_FIREBALL_SPEED = 0.5      # world units per ms
+IMP_FIREBALL_DAMAGE = 8
+IMP_FIRE_COOLDOWN = 2500      # ms between shots
+
 SOUNDS = {
     'pistol': "DSPISTOL",
     'shotgun': "DSSHOTGN",
