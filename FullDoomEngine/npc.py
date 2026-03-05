@@ -1,10 +1,12 @@
 import math
+import random
 import pygame as pg
 
 from enum import Enum
 from doomsettings import *
 from thing import Thing
 from projectile import ImpFireball
+from sounds import SoundEffect
 
 class NPCState(Enum):
     standing = 0
@@ -17,6 +19,10 @@ class NPCState(Enum):
 
 
 class NPC(Thing):
+    PAIN_DURATION = 400       # ms the pain frame is shown
+    DEATH_FRAME_DURATION = 150  # ms per death animation frame
+    WALK_FRAME_DURATION = 150   # ms per walk animation frame
+
     def __init__(self, engine, pos, angle):
         super().__init__(engine, pos, angle)
         self.engine = engine
@@ -24,13 +30,113 @@ class NPC(Thing):
         self.shootable = False
         self.line_of_sight = False
         self.health = 100
-        self.getting_hit = False
+        self.is_in_pain = False
+        self.pain_start_time = 0
+        self.pain_frame = None    # set by subclasses
+        self.pain_sound = None    # set by subclasses
+        self.death_frames = []    # set by subclasses
+        self.death_sounds = []    # set by subclasses (list so we can pick randomly)
+        self.death_frame_index = 0
+        self.death_frame_time = 0
+        self.walk_frame_index = 0
+        self.walk_frame_time = 0
+        self.walking_frame_suffixes = []  # set by subclasses
+
+    def _load_sound(self, lump_name):
+        """Load a sound effect, returning None if the lump isn't in the WAD."""
+        if lump_name in self.engine.wad_data.sound_effects:
+            return SoundEffect(lump_name, self.engine)
+        return None
+
+    def calculate_angle(self):
+        """Return 0 (rotation-independent) when dying or dead; otherwise normal."""
+        if self.state in (NPCState.dying, NPCState.dead):
+            return 0
+        return super().calculate_angle()
+
+    def get_y_offset(self, proj_plane_dist, view_y):
+        """
+        Death sprites are flat on the floor; their visual centre is at floor
+        level, so omit the world_height / extra_y_offset correction that
+        positions standing sprites at mid-torso height.
+        """
+        if self.state in (NPCState.dying, NPCState.dead):
+            floor_height = self.engine.bsp.get_sub_sector_height(self.pos)
+            player_eye_height = self.engine.player.get_view_height()
+            vertical_offset = floor_height - player_eye_height
+            return int((vertical_offset / view_y) * proj_plane_dist)
+        return super().get_y_offset(proj_plane_dist, view_y)
+
+    def _trigger_pain(self):
+        if self.pain_frame:
+            frame_cache = self.engine.object_handler.sprite_cache.get(self.sprite_name_base, {})
+            if self.pain_frame in frame_cache:
+                self.current_frame = self.pain_frame
+        if self.pain_sound:
+            self.pain_sound.play()
+        self.is_in_pain = True
+        self.pain_start_time = pg.time.get_ticks()
+
+    def _trigger_death(self):
+        self.state = NPCState.dying
+        self.is_in_pain = False
+        self.death_frame_index = 0
+        self.death_frame_time = pg.time.get_ticks()
+        if self.death_frames:
+            self.current_frame = self.death_frames[0]
+        if self.death_sounds:
+            random.choice(self.death_sounds).play()
+
+    def _advance_death(self):
+        now = pg.time.get_ticks()
+        if now - self.death_frame_time < self.DEATH_FRAME_DURATION:
+            return
+        self.death_frame_time = now
+        self.death_frame_index += 1
+        if self.death_frame_index >= len(self.death_frames):
+            # Clamp to last frame and mark as fully dead
+            self.death_frame_index = len(self.death_frames) - 1
+            self.state = NPCState.dead
+            return
+        self.current_frame = self.death_frames[self.death_frame_index]
 
     def update(self):
         super().update()
+
+        # Fully dead: just lie on the floor, no further logic
+        if self.state == NPCState.dead:
+            self.shootable = False
+            return
+
+        # Dying: advance the animation and nothing else
+        if self.state == NPCState.dying:
+            self._advance_death()
+            return
+
+        now = pg.time.get_ticks()
+
+        # Recover from pain after duration elapses
+        if self.is_in_pain and now - self.pain_start_time > self.PAIN_DURATION:
+            self.is_in_pain = False
+            self.walk_frame_index = 0
+            self.walk_frame_time = now
+            self.state = NPCState.walking
+
+        # Advance walk animation when not in pain/dying/dead
+        if not self.is_in_pain and self.walking_frame_suffixes:
+            if now - self.walk_frame_time > self.WALK_FRAME_DURATION:
+                self.walk_frame_time = now
+                self.walk_frame_index = (self.walk_frame_index + 1) % len(self.walking_frame_suffixes)
+                self.current_frame = self.walking_frame_suffixes[self.walk_frame_index]
+
+        # Take damage when in crosshair and player fires
         if self.shootable and self.engine.weapon.shooting:
             self.health -= WEAPON_DAMAGE[self.engine.player.current_weapon]
-            self.state = NPCState.getting_hit
+            if self.health <= 0:
+                self._trigger_death()
+            elif not self.is_in_pain:
+                self.state = NPCState.getting_hit
+                self._trigger_pain()
 
 
 class ZombieMan(NPC):
@@ -39,22 +145,17 @@ class ZombieMan(NPC):
         self.sprite_name_base = "POSS"
         self.standing_frame_suffixes = ["A"]
         self.walking_frame_suffixes = ["B","C","D"]
-        self.hit_frame_suffix = ["E"]
-        self.dead_frame_suffixes = ["G","H", "I", "K"]
-        self.gib_frame_suffixes = ["K", "L", "M"]
-        # base height in pixels
         self.world_height = 56
-        # found by trial and error - offset to match up with ground.
         self.extra_y_offset = 20
-        # cache the scaled textures.
+        self.pain_frame = "G"
+        self.pain_sound = self._load_sound("DSPOPAIN")
+        self.death_frames = ["H", "I", "J", "K", "L"]
+        self.death_sounds = [s for s in [
+            self._load_sound("DSPODTH1"),
+            self._load_sound("DSPODTH2"),
+            self._load_sound("DSPODTH3"),
+        ] if s is not None]
         self.pre_cache(self.sprite_name_base)
-
-    def update(self):
-        super().update()
-        if self.shootable:
-            print(f"Zombieman just became shootable! {self.dist}")
-        if self.getting_hit:
-            print(f"Zombieman just got hit")
 
 
 class ShotgunGuy(NPC):
@@ -63,18 +164,16 @@ class ShotgunGuy(NPC):
         self.sprite_name_base = "SPOS"
         self.standing_frame_suffixes = ["A"]
         self.walking_frame_suffixes = ["B","C","D","E"]
-        # base height in pixels
         self.world_height = 56
         self.radius = 20
-        # found by trial and error - offset to match up with ground.
         self.extra_y_offset = 20
-        # cache the scaled textures.
+        self.pain_frame = "G"
+        self.pain_sound = self._load_sound("DSPOPAIN")
+        self.death_frames = ["H", "I", "J", "K", "L"]
+        self.death_sounds = [s for s in [
+            self._load_sound("DSSGTDTH"),
+        ] if s is not None]
         self.pre_cache(self.sprite_name_base)
-
-    def update(self):
-        super().update()
-        if self.shootable:
-            print(f"Shotgunguy just became shootable! {self.dist}")
 
 
 class Imp(NPC):
@@ -85,12 +184,13 @@ class Imp(NPC):
         self.sprite_name_base = "TROO"
         self.standing_frame_suffixes = ["A"]
         self.walking_frame_suffixes = ["B","C","D","E"]
-        # base height in pixels
         self.world_height = 56
         self.radius = 20
-        # found by trial and error - offset to match up with ground.
         self.extra_y_offset = 20
-        # cache the scaled textures.
+        self.pain_frame = "H"
+        self.pain_sound = self._load_sound("DSIMPPAIN")
+        self.death_frames = ["I", "J", "K", "L", "M"]
+        self.death_sounds = []  # DSIMPDTH not in DOOM1.WAD shareware
         self.pre_cache(self.sprite_name_base)
         self.last_fire_time = -IMP_FIRE_COOLDOWN
 
@@ -132,9 +232,11 @@ class Imp(NPC):
 
     def update(self):
         super().update()
+        # Don't move or fire if dying/dead
+        if self.state in (NPCState.dying, NPCState.dead):
+            return
         dp = self.engine.player.pos - self.pos
         if dp.magnitude() < self.TURN_RANGE:
             self._face_player()
         if self.line_of_sight:
             self._try_fire()
-
