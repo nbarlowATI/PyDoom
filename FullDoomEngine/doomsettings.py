@@ -80,6 +80,20 @@ WEAPON_RANGE = {
 
 MAX_WEAPON_OFFSET = 200
 
+NPC_WALK_SPEED = 0.075           # world units per ms
+NPC_PATROL_TURN_INTERVAL = 3000  # ms between random direction changes
+NPC_CHASE_RADIUS = 600           # world units; NPC chases player within this range
+
+ZOMBIE_SHOOT_DAMAGE = 7
+ZOMBIE_SHOOT_COOLDOWN = 1500     # ms between shots
+ZOMBIE_SHOOT_RANGE = 900
+ZOMBIE_SHOOT_PROB = 0.35         # chance to fire each attempt
+
+SHOTGUN_SHOOT_DAMAGE = 15
+SHOTGUN_SHOOT_COOLDOWN = 2000
+SHOTGUN_SHOOT_RANGE = 650
+SHOTGUN_SHOOT_PROB = 0.45
+
 IMP_FIREBALL_SPEED = 0.5      # world units per ms
 IMP_FIREBALL_DAMAGE = 8
 IMP_FIRE_COOLDOWN = 2500      # ms between shots

@@ -74,9 +74,11 @@ class DoomEngine:
             for proj in self.object_handler.projectiles:
                 self.view_renderer.draw_sprite(proj)
             
+            self.view_renderer.draw_pain_tint()
             self.view_renderer.draw_weapon()
             self.view_renderer.draw_status_bar()
             self.view_renderer.draw_doomguy(self.player.face_img)
+            self.view_renderer.draw_health()
             if self.debug_mode:
                 self.view_renderer.draw_z_buffer()
                 self.view_renderer.draw_debug_cursor()

@@ -81,7 +81,7 @@ class ImpFireball(Thing):
         self.frame_index = 0
         self.current_frame = self.EXPLODE_FRAMES[0]
         if deal_damage:
-            self.engine.player.health -= IMP_FIREBALL_DAMAGE
+            self.engine.player.take_damage(IMP_FIREBALL_DAMAGE)
 
     def _hits_solid_wall(self, pos):
         """

@@ -34,6 +34,9 @@ class ViewRenderer:
         # the screen, and, on demand, give e.g. z-buffer information for
         # that screen location.
         self.debug_cursor = (WIDTH//2, HEIGHT //2)
+        pg.font.init()
+        bar_h = self.status_bar.get_height()
+        self.health_font = pg.font.SysFont('papyrus,oldenglishtext,uncialantiqua,serif', int(bar_h * 0.55), bold=True)
 
     # reset clip buffers every frame
     def reset_clip_buffers(self):
@@ -142,6 +145,25 @@ class ViewRenderer:
         img = self.status_bar
         pos = (H_WIDTH - img.get_width() //2, HEIGHT - img.get_height())
         self.screen.blit(img, pos)
+
+    def draw_health(self):
+        bar_h = self.status_bar.get_height()
+        bar_x = H_WIDTH - self.status_bar.get_width() // 2
+        text = self.health_font.render(f'{max(0, self.player.health)}%', True, (255, 0, 0))
+        x = bar_x + int(self.status_bar.get_width() * 0.09) + 100
+        y = HEIGHT - bar_h + (bar_h - text.get_height()) // 2 - 10
+        self.screen.blit(text, (x, y))
+
+    def draw_pain_tint(self):
+        if not self.player.is_in_pain:
+            return
+        elapsed = pg.time.get_ticks() - self.player.pain_start_time
+        alpha = int(140 * max(0, 1 - elapsed / self.player.PAIN_DURATION))
+        if alpha <= 0:
+            return
+        tint = pg.Surface((WIDTH, HEIGHT), pg.SRCALPHA)
+        tint.fill((200, 0, 0, alpha))
+        self.screen.blit(tint, (0, 0))
 
     # draw the doomguy's face on the status bar.
     def draw_doomguy(self, sprite_name='STFST00'):

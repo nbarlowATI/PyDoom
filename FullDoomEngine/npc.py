@@ -22,6 +22,7 @@ class NPC(Thing):
     PAIN_DURATION = 400       # ms the pain frame is shown
     DEATH_FRAME_DURATION = 150  # ms per death animation frame
     WALK_FRAME_DURATION = 150   # ms per walk animation frame
+    SHOOT_FRAME_DURATION = 120  # ms per shoot animation frame
 
     def __init__(self, engine, pos, angle):
         super().__init__(engine, pos, angle)
@@ -41,6 +42,20 @@ class NPC(Thing):
         self.walk_frame_index = 0
         self.walk_frame_time = 0
         self.walking_frame_suffixes = []  # set by subclasses
+        self.patrol_angle = angle        # direction of movement in degrees
+        self.patrol_turn_time = 0        # timestamp of last random turn
+        self.radius = 20                 # collision radius (subclasses may override)
+        # Hitscan shooting — set by subclasses that can shoot
+        self.shoot_damage = 0
+        self.shoot_cooldown = 0
+        self.shoot_range = 0
+        self.shoot_prob = 0.0
+        self.shoot_sound = None
+        self.last_shoot_time = 0
+        self.shooting_frames = []    # set by subclasses
+        self.is_shooting_anim = False
+        self.shoot_anim_index = 0
+        self.shoot_anim_time = 0
 
     def _load_sound(self, lump_name):
         """Load a sound effect, returning None if the lump isn't in the WAD."""
@@ -66,6 +81,41 @@ class NPC(Thing):
             vertical_offset = floor_height - player_eye_height
             return int((vertical_offset / view_y) * proj_plane_dist)
         return super().get_y_offset(proj_plane_dist, view_y)
+
+    def _move(self, dt):
+        step = pg.Vector2(NPC_WALK_SPEED * dt, 0)
+        step.rotate_ip(-self.patrol_angle)
+        new_pos = self.pos + step
+        collision_segs = self.engine.bsp.trace_collision(self.pos, new_pos, self.radius)
+        if not collision_segs:
+            self.pos = new_pos
+            # Face the direction of travel
+            self.angle = 270 - math.degrees(math.atan2(step.y, step.x))
+        else:
+            # Hit a wall — pick a new random patrol direction
+            self.patrol_angle = random.uniform(0, 360)
+            self.patrol_turn_time = pg.time.get_ticks()
+
+    def _try_shoot_hitscan(self, now):
+        if not self.shoot_damage:
+            return
+        if not self.line_of_sight:
+            return
+        dp = self.engine.player.pos - self.pos
+        if dp.magnitude() > self.shoot_range:
+            return
+        if now - self.last_shoot_time < self.shoot_cooldown:
+            return
+        self.last_shoot_time = now
+        if self.shooting_frames:
+            self.is_shooting_anim = True
+            self.shoot_anim_index = 0
+            self.shoot_anim_time = now
+            self.current_frame = self.shooting_frames[0]
+        if random.random() < self.shoot_prob:
+            self.engine.player.take_damage(self.shoot_damage)
+            if self.shoot_sound:
+                self.shoot_sound.play()
 
     def _trigger_pain(self):
         if self.pain_frame:
@@ -122,12 +172,38 @@ class NPC(Thing):
             self.walk_frame_time = now
             self.state = NPCState.walking
 
-        # Advance walk animation when not in pain/dying/dead
-        if not self.is_in_pain and self.walking_frame_suffixes:
+        # Advance shoot animation
+        if self.is_shooting_anim:
+            if now - self.shoot_anim_time > self.SHOOT_FRAME_DURATION:
+                self.shoot_anim_time = now
+                self.shoot_anim_index += 1
+                if self.shoot_anim_index >= len(self.shooting_frames):
+                    self.is_shooting_anim = False
+                    self.walk_frame_index = 0
+                else:
+                    self.current_frame = self.shooting_frames[self.shoot_anim_index]
+
+        # Advance walk animation when not in pain/shooting/dying/dead
+        if not self.is_in_pain and not self.is_shooting_anim and self.walking_frame_suffixes:
             if now - self.walk_frame_time > self.WALK_FRAME_DURATION:
                 self.walk_frame_time = now
                 self.walk_frame_index = (self.walk_frame_index + 1) % len(self.walking_frame_suffixes)
                 self.current_frame = self.walking_frame_suffixes[self.walk_frame_index]
+
+        # Patrol movement
+        if not self.is_in_pain:
+            dp = self.engine.player.pos - self.pos
+            if dp.magnitude() < NPC_CHASE_RADIUS:
+                # Steer toward player
+                self.patrol_angle = -math.degrees(math.atan2(dp.y, dp.x))
+            elif now - self.patrol_turn_time > NPC_PATROL_TURN_INTERVAL:
+                # Periodic random wander turn
+                self.patrol_angle = random.uniform(0, 360)
+                self.patrol_turn_time = now
+            self._move(self.engine.dt)
+
+        # Hitscan shooting at player
+        self._try_shoot_hitscan(now)
 
         # Take damage when in crosshair and player fires
         if self.shootable and self.engine.weapon.shooting:
@@ -155,6 +231,12 @@ class ZombieMan(NPC):
             self._load_sound("DSPODTH2"),
             self._load_sound("DSPODTH3"),
         ] if s is not None]
+        self.shooting_frames = ["E", "F"]
+        self.shoot_damage = ZOMBIE_SHOOT_DAMAGE
+        self.shoot_cooldown = ZOMBIE_SHOOT_COOLDOWN
+        self.shoot_range = ZOMBIE_SHOOT_RANGE
+        self.shoot_prob = ZOMBIE_SHOOT_PROB
+        self.shoot_sound = self._load_sound("DSPISTOL")
         self.pre_cache(self.sprite_name_base)
 
 
@@ -173,6 +255,12 @@ class ShotgunGuy(NPC):
         self.death_sounds = [s for s in [
             self._load_sound("DSSGTDTH"),
         ] if s is not None]
+        self.shooting_frames = ["F"]
+        self.shoot_damage = SHOTGUN_SHOOT_DAMAGE
+        self.shoot_cooldown = SHOTGUN_SHOOT_COOLDOWN
+        self.shoot_range = SHOTGUN_SHOOT_RANGE
+        self.shoot_prob = SHOTGUN_SHOOT_PROB
+        self.shoot_sound = self._load_sound("DSSHOTGN")
         self.pre_cache(self.sprite_name_base)
 
 

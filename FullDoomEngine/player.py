@@ -6,6 +6,7 @@ import pygame as pg
 
 from doomsettings import *
 from data_types import Seg
+from sounds import SoundEffect
 
 class Player:
     def __init__(self, engine):
@@ -27,6 +28,11 @@ class Player:
         self.weapon_y_offset = 0
         self.health = 100
         self.face_img = 'STFST00'
+        self.is_in_pain = False
+        self.pain_start_time = 0
+        self.PAIN_DURATION = 500  # ms the red tint lasts
+        pain_lump = "DSPLPAIN" if "DSPLPAIN" in self.engine.wad_data.sound_effects else "DSPOPAIN"
+        self.pain_sound = SoundEffect(pain_lump, self.engine)
         self.shooting = False
         self.reloading = False
         
@@ -64,6 +70,12 @@ class Player:
                 ]
             )
 
+    def take_damage(self, amount):
+        self.health = max(0, self.health - amount)
+        self.is_in_pain = True
+        self.pain_start_time = pg.time.get_ticks()
+        self.pain_sound.play()
+
     def handle_fire_event(self, event):
         if event.button == 1 and not self.engine.weapon.shooting and not self.engine.weapon.reloading:
             self.engine.weapon.play_sound()
@@ -71,6 +83,8 @@ class Player:
 
 
     def update(self):
+        if self.is_in_pain and pg.time.get_ticks() - self.pain_start_time > self.PAIN_DURATION:
+            self.is_in_pain = False
         self.get_height()
         self.get_view_height()
         self.control()
