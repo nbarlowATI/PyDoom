@@ -33,6 +33,9 @@ class Player:
         self.PAIN_DURATION = 500  # ms the red tint lasts
         pain_lump = "DSPLPAIN" if "DSPLPAIN" in self.engine.wad_data.sound_effects else "DSPOPAIN"
         self.pain_sound = SoundEffect(pain_lump, self.engine)
+        self.inventory = {'none', 'pistol'}
+        pickup_lump = "DSWPNUP" if "DSWPNUP" in self.engine.wad_data.sound_effects else "DSPISTOL"
+        self.pickup_sound = SoundEffect(pickup_lump, self.engine)
         self.shooting = False
         self.reloading = False
         
@@ -200,15 +203,24 @@ class Player:
         if check_segment(seg) == WALL_TYPE.DOOR and seg.linedef_id in self.engine.doors:
             self.engine.doors[seg.linedef_id].toggle_open()
 
+    def pick_up_weapon(self, weapon_name):
+        if weapon_name in self.inventory:
+            return
+        self.inventory.add(weapon_name)
+        self.pickup_sound.play()
+
     def change_weapon(self, weapon_id):
         """
         Called when number key is pressed
         """
         if weapon_id not in WEAPON_BUTTONS:
             return
-        if WEAPON_BUTTONS[weapon_id] == self.current_weapon:
+        weapon = WEAPON_BUTTONS[weapon_id]
+        if weapon not in self.inventory:
             return
-        self.selected_weapon = WEAPON_BUTTONS[weapon_id]
+        if weapon == self.current_weapon:
+            return
+        self.selected_weapon = weapon
 
 def check_segment(segment):
     if segment.back_sector is None:

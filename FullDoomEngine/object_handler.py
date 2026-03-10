@@ -2,7 +2,8 @@ import pygame as pg
 from pygame.math import Vector2 as vec2
 import clevercsv
 
-from collectible import Collectible
+from collectible import Collectible, WeaponPickup
+from doomsettings import WEAPON_CLASS_MAP
 from ornament import Ornament, ExplodingBarrel
 from npc import NPC, ZombieMan, ShotgunGuy, Imp
 
@@ -73,7 +74,10 @@ class ObjectHandler:
             self.npcs.append(Imp(self.engine, thing.pos, thing.angle))
 
     def add_collectible(self, thing, thing_info):
-        self.objects.append(Collectible(self.engine, thing.pos, thing.angle, thing_info))
+        if thing_info["class"] in WEAPON_CLASS_MAP:
+            self.objects.append(WeaponPickup(self.engine, thing.pos, thing.angle, thing_info))
+        else:
+            self.objects.append(Collectible(self.engine, thing.pos, thing.angle, thing_info))
 
     def add_ornament(self, thing, thing_info):
         if thing_info["class"] == "ExplodingBarrel":

@@ -56,26 +56,42 @@ SAMPLE_RATE = 11025
 
 # sprites
 WEAPON_BUTTONS = {
-    '1' : "none",
-    '2' : "pistol",
-    '3' : "shotgun"
+    '1': "none",
+    '2': "chainsaw",
+    '3': "pistol",
+    '4': "shotgun",
+    '5': "chaingun",
 }
 WEAPON_SPRITES = {
-    'none': 'PUNGA0',
-    'pistol' : 'PISGA0',
-    'shotgun' : 'SHTGA0',
+    'none':     'PUNGA0',
+    'chainsaw': 'SAWGA0',
+    'pistol':   'PISGA0',
+    'shotgun':  'SHTGA0',
+    'chaingun': 'CHGGA0',
 }
 
 WEAPON_DAMAGE = {
-    'none': 0,
-    'pistol': 20,
-    'shotgun': 50
+    'none':     0,
+    'chainsaw': 40,
+    'pistol':   20,
+    'shotgun':  50,
+    'chaingun': 10,
 }
 
 WEAPON_RANGE = {
-    'none': 500,
-    'pistol': 2000,
-    'shotgun': 500
+    'none':     500,
+    'chainsaw': 80,
+    'pistol':   2000,
+    'shotgun':  500,
+    'chaingun': 2000,
+}
+
+WEAPON_PICKUP_RADIUS = 40
+# Maps thing_info["class"] from thing_index.csv to internal weapon name
+WEAPON_CLASS_MAP = {
+    'Shotgun':  'shotgun',
+    'Chainsaw': 'chainsaw',
+    'Chaingun': 'chaingun',
 }
 
 MAX_WEAPON_OFFSET = 200
@@ -99,12 +115,14 @@ IMP_FIREBALL_DAMAGE = 8
 IMP_FIRE_COOLDOWN = 2500      # ms between shots
 
 SOUNDS = {
-    'pistol': "DSPISTOL",
-    'shotgun': "DSSHOTGN",
+    'pistol':         "DSPISTOL",
+    'chaingun':       "DSPISTOL",
+    'shotgun':        "DSSHOTGN",
     'barrel_explode': "DSBAREXP",
-    'door_open': "DSDOROPN",
-    'pain': "DSPOSACT",
-    'death': "DSPOSDTH"
+    'door_open':      "DSDOROPN",
+    'pain':           "DSPOSACT",
+    'death':          "DSPOSDTH",
+    'weapon_pickup':  "DSWPNUP",
 }
 
 # sprites in the WAD file are larger than world space

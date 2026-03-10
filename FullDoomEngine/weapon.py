@@ -8,9 +8,11 @@ class Weapon:
     def __init__(self, engine):
         self.engine = engine
         self.sprite_bases = {
-            "none":"PUN", 
-            "pistol": "PIS", 
-            "shotgun": "SHT"
+            "none":     "PUN",
+            "chainsaw": "SAW",
+            "pistol":   "PIS",
+            "shotgun":  "SHT",
+            "chaingun": "CHG",
         }
         self.weapon_sprites = {}
         self.muzzle_flash_sprites = {}
