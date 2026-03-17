@@ -151,23 +151,25 @@ class BSP:
         return seg.front_sector.floor_height
     
     ## collision of player with walls
-    def trace_collision(self, start_pos, end_pos):
-        collisions =  self._trace_node(self.root_node_id, end_pos)
+    def trace_collision(self, start_pos, end_pos, radius=None):
+        if radius is None:
+            radius = self.player.size
+        collisions = self._trace_node(self.root_node_id, end_pos, radius)
         return collisions
-    
-    def _trace_node(self, node_id, end_pos):
+
+    def _trace_node(self, node_id, end_pos, radius):
         if node_id >= self.SUB_SECTOR_IDENTIFIER:
-            return self._check_subsector(node_id - self.SUB_SECTOR_IDENTIFIER, end_pos)
+            return self._check_subsector(node_id - self.SUB_SECTOR_IDENTIFIER, end_pos, radius)
 
         node = self.nodes[node_id]
         side = self.is_on_back_side(node, end_pos)
 
-        front = self._trace_node(node.front_child_id, end_pos)
-        back = self._trace_node(node.back_child_id, end_pos)
+        front = self._trace_node(node.front_child_id, end_pos, radius)
+        back = self._trace_node(node.back_child_id, end_pos, radius)
 
         return front + back
-    
-    def _check_subsector(self, sub_sector_id, end):
+
+    def _check_subsector(self, sub_sector_id, end, radius):
         sub_sector = self.sub_sectors[sub_sector_id]
         collisions = []
         for i in range(sub_sector.seg_count):
@@ -176,9 +178,9 @@ class BSP:
 #                continue
             A = seg.start_vertex
             B = seg.end_vertex
-            if circle_segment_collision(end, A, B, self.player.size):
+            if circle_segment_collision(end, A, B, radius):
                 collisions.append(seg)
-              
+
         return collisions
     
 def circle_segment_collision(P, A, B, radius):

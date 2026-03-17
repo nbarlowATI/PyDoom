@@ -34,14 +34,13 @@ class ViewRenderer:
         # the screen, and, on demand, give e.g. z-buffer information for
         # that screen location.
         self.debug_cursor = (WIDTH//2, HEIGHT //2)
+        pg.font.init()
+        bar_h = self.status_bar.get_height()
+        self.health_font = pg.font.SysFont('papyrus,oldenglishtext,uncialantiqua,serif', int(bar_h * 0.55), bold=True)
 
     # reset clip buffers every frame
     def reset_clip_buffers(self):
         self.z_buffer.fill(np.inf)
-        # self.clip_top = [0] * WIDTH
-        # self.clip_bottom = [HEIGHT - 1] * WIDTH
-       # self.wall_depth = [math.inf] * WIDTH
-
 
     def update(self):
         if self.engine.debug_mode:
@@ -70,6 +69,11 @@ class ViewRenderer:
         sprite_height = sprite.scaled_sprite.get_height()
         blit_x, blit_y = sprite.blit_pos
 
+        # Flag will be set to true if sprite is drawn in central column of screen
+        shootable = False
+        # Flag will be set to true if sprite is drawn at all.
+        line_of_sight = False
+
         for i in range(sprite_width):
             screen_column = blit_x + i
             if not (0 <= screen_column < WIDTH):
@@ -85,28 +89,24 @@ class ViewRenderer:
 
                 # Check if sprite is closer than geometry at this pixel
                 if sprite.dist < self.z_buffer[screen_column, screen_row]:
+
+                    # set flags to say whether npc is in our sights and vice/versa
+                    line_of_sight = True
+                    if abs(screen_column - H_WIDTH) < 10:
+                        shootable = True
                     # Get the pixel colour from the sprite column
                     pixel_colour = sprite.scaled_sprite.get_at((i, j))
 
                     # Skip fully transparent pixels (alpha == 0)
                     if pixel_colour[:3] == COLOUR_KEY:
-                    
                         continue
 
                     # Draw the pixel
                     self.screen.set_at((screen_column, screen_row), pixel_colour)
-
-            # # Occlusion check: only check center y
-            # y_check = blit_y + sprite_height // 2
-            # if not (0 <= y_check < HEIGHT):
-            #     continue
-            
-            # # Depth test against geometry
-            # if sprite.dist > self.z_buffer[screen_column, y_check]:
-            #     continue
-            # col_rect = pg.Rect(i, 0, 1, sprite_height)
-            # sprite_col = sprite.scaled_sprite.subsurface(col_rect)
-            # self.screen.blit(sprite_col, (screen_column, blit_y))
+  
+        sprite.shootable = shootable
+        sprite.line_of_sight = line_of_sight
+        
 
     def draw_flat(self, tex_id, light_level, x, y1, y2, world_z):
         if y1 < y2:
@@ -127,12 +127,18 @@ class ViewRenderer:
                                    z_col)
                 
     # draw currently selected weapon at the bottom of the screen, but above status bar.
-    def draw_weapon(self, sprite_name):
-        img = self.sprites[sprite_name]
-        x_pos = H_WIDTH - img.get_width() //2
-        y_pos = HEIGHT - img.get_height() - self.status_bar.get_height()+self.player.weapon_y_offset
-        pos = (x_pos, y_pos)
-        self.screen.blit(img, pos)
+    def draw_weapon(self, sprite_name=None):
+        if sprite_name:
+            imgs = [self.sprites[sprite_name]]
+        else:
+            # might be more than one sprite, e.g. muzzle flash overlaid on weapon.
+            imgs = self.engine.weapon.current_sprites
+        # x_pos = H_WIDTH - img.get_width() //2
+        # y_pos = HEIGHT - img.get_height() - self.status_bar.get_height()+self.player.weapon_y_offset
+        # pos = (x_pos, y_pos)
+        pos = self.engine.weapon.pos
+        for img in imgs:
+            self.screen.blit(img, pos)
 
     # draw the status bar at the bottom of the screen
     def draw_status_bar(self):
@@ -140,22 +146,30 @@ class ViewRenderer:
         pos = (H_WIDTH - img.get_width() //2, HEIGHT - img.get_height())
         self.screen.blit(img, pos)
 
+    def draw_health(self):
+        bar_h = self.status_bar.get_height()
+        bar_x = H_WIDTH - self.status_bar.get_width() // 2
+        text = self.health_font.render(f'{max(0, self.player.health)}%', True, (255, 0, 0))
+        x = bar_x + int(self.status_bar.get_width() * 0.09) + 100
+        y = HEIGHT - bar_h + (bar_h - text.get_height()) // 2 - 10
+        self.screen.blit(text, (x, y))
+
+    def draw_pain_tint(self):
+        if not self.player.is_in_pain:
+            return
+        elapsed = pg.time.get_ticks() - self.player.pain_start_time
+        alpha = int(140 * max(0, 1 - elapsed / self.player.PAIN_DURATION))
+        if alpha <= 0:
+            return
+        tint = pg.Surface((WIDTH, HEIGHT), pg.SRCALPHA)
+        tint.fill((200, 0, 0, alpha))
+        self.screen.blit(tint, (0, 0))
+
     # draw the doomguy's face on the status bar.
     def draw_doomguy(self, sprite_name='STFST00'):
         img = self.doomguy[sprite_name]
         pos = (H_WIDTH - img.get_width() //2,HEIGHT - img.get_height() )
         self.screen.blit(img, pos)
-
-    def draw_occlusion_lines(self):
-        """
-        For debugging
-        """
-        for x in range(WIDTH):
-            # ensure clip buffers are in the right range
-            clip_top = int(min(max(0, self.clip_top[x]), HEIGHT-1))
-            clip_bottom = int(min(max(0, self.clip_bottom[x]), HEIGHT-1))
-            self.framebuffer[x, clip_top] = (255,0,0)
-            self.framebuffer[x, clip_bottom] = (0,0,255)
 
     def debug_cursor_control(self):
         # if in debug mode, disable all movement
@@ -202,9 +216,6 @@ class ViewRenderer:
         rgb = np.repeat(img[:,:, None], 3, axis=2)
         surf = pg.surfarray.make_surface(rgb)
         self.screen.blit(surf, (0,0))
-
-
-
 
     @staticmethod
     @njit

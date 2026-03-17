@@ -13,7 +13,10 @@ class WADData:
     }
 
     SOUND_EFFECT_NAMES = [
-        "DSDOROPN"
+        "DSDOROPN", "DSPISTOL", "DSSHOTGN", "DSBAREXP",
+        "DSPOPAIN", "DSIMPPAIN",
+        "DSPODTH1", "DSPODTH2", "DSPODTH3", "DSSGTDTH",
+        "DSPLPAIN", "DSWPNUP",
     ]
 
     def __init__(self, engine, map_name):
@@ -63,7 +66,12 @@ class WADData:
             num_bytes=26
         )
 
-        self.sound_effects = { name: self.get_sound_effect(name)  for name in self.SOUND_EFFECT_NAMES}
+        self.sound_effects = {}
+        for name in self.SOUND_EFFECT_NAMES:
+            try:
+                self.sound_effects[name] = self.get_sound_effect(name)
+            except ValueError:
+                pass
 
         self.update_data()
         self.asset_data = AssetData(self)

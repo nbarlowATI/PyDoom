@@ -10,6 +10,7 @@ from raycasting import RayCasting
 from seg_handler import SegHandler
 from sounds import SoundEffect
 from view_renderer import ViewRenderer
+from weapon import Weapon
 
 from events import *
 from doomsettings import *
@@ -31,12 +32,14 @@ class DoomEngine:
         self.wad_data = WADData(self, map_name)
         self.map_renderer = MapRenderer(self)
         self.player = Player(self)
+        
         self.bsp = BSP(self)
         self.raycaster = RayCasting(self)
         self.seg_handler = SegHandler(self)
         self.view_renderer = ViewRenderer(self)
         self.object_handler = ObjectHandler(self)
         self.object_handler.add_objects_npcs(difficulty)
+        self.weapon = Weapon(self)
         self.doors = {}
         # set timer to change doomguy face every 2s
         pg.time.set_timer(DOOMGUY_FACE_CHANGE_EVENT, 2000)
@@ -45,7 +48,7 @@ class DoomEngine:
         # reset view renderer's clip buffers, used to correctly occlude sprites
         self.view_renderer.reset_clip_buffers()
         self.player.update()
-        
+        self.weapon.update()
         self.seg_handler.update()
         self.bsp.update()
         for door in self.doors.values():
@@ -68,10 +71,14 @@ class DoomEngine:
                 self.view_renderer.draw_sprite(npc)
             for obj in self.object_handler.objects:
                 self.view_renderer.draw_sprite(obj)
+            for proj in self.object_handler.projectiles:
+                self.view_renderer.draw_sprite(proj)
             
-            self.view_renderer.draw_weapon(WEAPON_SPRITES[self.player.current_weapon])
+            self.view_renderer.draw_pain_tint()
+            self.view_renderer.draw_weapon()
             self.view_renderer.draw_status_bar()
             self.view_renderer.draw_doomguy(self.player.face_img)
+            self.view_renderer.draw_health()
             if self.debug_mode:
                 self.view_renderer.draw_z_buffer()
                 self.view_renderer.draw_debug_cursor()
@@ -109,6 +116,9 @@ class DoomEngine:
             # cycle randomly through the different doomguy faces
             if e.type == DOOMGUY_FACE_CHANGE_EVENT:
                 self.player.set_face_image()
+            # fire weapon
+            if e.type == pg.MOUSEBUTTONDOWN:
+                self.player.handle_fire_event(e)
 
 
     def run(self):

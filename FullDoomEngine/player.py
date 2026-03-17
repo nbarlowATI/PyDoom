@@ -6,8 +6,7 @@ import pygame as pg
 
 from doomsettings import *
 from data_types import Seg
-#from door import Door
-
+from sounds import SoundEffect
 
 class Player:
     def __init__(self, engine):
@@ -29,6 +28,16 @@ class Player:
         self.weapon_y_offset = 0
         self.health = 100
         self.face_img = 'STFST00'
+        self.is_in_pain = False
+        self.pain_start_time = 0
+        self.PAIN_DURATION = 500  # ms the red tint lasts
+        pain_lump = "DSPLPAIN" if "DSPLPAIN" in self.engine.wad_data.sound_effects else "DSPOPAIN"
+        self.pain_sound = SoundEffect(pain_lump, self.engine)
+        self.inventory = {'none', 'pistol'}
+        pickup_lump = "DSWPNUP" if "DSWPNUP" in self.engine.wad_data.sound_effects else "DSPISTOL"
+        self.pickup_sound = SoundEffect(pickup_lump, self.engine)
+        self.shooting = False
+        self.reloading = False
         
 
     def get_view_height(self):
@@ -64,15 +73,28 @@ class Player:
                 ]
             )
 
+    def take_damage(self, amount):
+        self.health = max(0, self.health - amount)
+        self.is_in_pain = True
+        self.pain_start_time = pg.time.get_ticks()
+        self.pain_sound.play()
+
+    def handle_fire_event(self, event):
+        if event.button == 1 and not self.engine.weapon.shooting and not self.engine.weapon.reloading:
+            self.engine.weapon.play_sound()
+            self.engine.weapon.shooting = True
+
 
     def update(self):
+        if self.is_in_pain and pg.time.get_ticks() - self.pain_start_time > self.PAIN_DURATION:
+            self.is_in_pain = False
         self.get_height()
         self.get_view_height()
         self.control()
         self.mouse_control()
         if self.active_door:
             self.active_door.update()
-        if self.selected_weapon != self.current_weapon \
+        if self.selected_weapon != self.engine.weapon.current_weapon \
             and not self.lowering_weapon:
             self.lowering_weapon = True
         if self.raising_weapon:
@@ -84,7 +106,7 @@ class Player:
             if self.weapon_y_offset >= MAX_WEAPON_OFFSET:
                 self.lowering_weapon = False
                 self.raising_weapon = True
-                self.current_weapon = self.selected_weapon
+                self.engine.weapon.current_weapon = self.selected_weapon
             else:
                 self.weapon_y_offset += WEAPON_CHANGE_SPEED
     
@@ -133,36 +155,33 @@ class Player:
     # * slide along wall, if movement is at an angle to non-traversible segment.
     def handle_collision(self, movement, collision_segs):
         pos = self.pos
+        # First pass: if any door seg is open, movement goes through immediately.
+        for collision_seg in collision_segs:
+            if check_segment(collision_seg) != WALL_TYPE.DOOR:
+                continue
+            if collision_seg.linedef_id in self.engine.doors:
+                door = self.engine.doors[collision_seg.linedef_id]
+                if door.is_open or door.is_opening:
+                    return pos + movement
+            else:
+                # Door not yet registered — allow passage if ceiling clearance is enough.
+                back = collision_seg.back_sector
+                if back and (back.ceil_height - back.floor_height) > MIN_ROOM_HEIGHT:
+                    return pos + movement
+        # Second pass: apply wall physics for everything else.
         for collision_seg in collision_segs:
             wall_type = check_segment(collision_seg)
- #           print(f"wall type {wall_type}")
             if wall_type == WALL_TYPE.PASSABLE:
                 pos += movement
- #               print(f"passable wall {pos} {movement}")
             elif wall_type == WALL_TYPE.DOOR:
-                if collision_seg.linedef_id in self.engine.doors:
-                    door = self.engine.doors[collision_seg.linedef_id]
- #                   print(f"door open? {door.is_open} {door.is_opening} {door.is_closed} {door.is_closing}")
-                    if door.is_open or door.is_opening:
-                        # door is open
-                        pos += movement
- #                       print(f"can move through door {pos} {movement}")
-                        return pos
-                else:
-                    pass
- #                   print(f"known doors {self.engine.doors.keys()} this is {collision_seg.linedef_id}")
+                pass  # Closed door — treat as solid
             elif wall_type == WALL_TYPE.SOLID_WALL:
                 wall_vec = collision_seg.start_vertex - collision_seg.end_vertex
                 wall_vec_norm = wall_vec / wall_vec.magnitude()
                 dot_product = movement.dot(wall_vec_norm)
                 pos += dot_product * wall_vec_norm
- #               print("solid wall")
             elif wall_type == WALL_TYPE.IMPASSABLE:
-                # likely a passable wall behind - just break out of the loop
-                # rather than trying to figure out how to slide.
-   #             print("impassable wall")
                 return pos
- #       print(f" returning pos {pos}")
         return pos
 
     def mouse_control(self):
@@ -188,15 +207,24 @@ class Player:
         if check_segment(seg) == WALL_TYPE.DOOR and seg.linedef_id in self.engine.doors:
             self.engine.doors[seg.linedef_id].toggle_open()
 
+    def pick_up_weapon(self, weapon_name):
+        if weapon_name in self.inventory:
+            return
+        self.inventory.add(weapon_name)
+        self.pickup_sound.play()
+
     def change_weapon(self, weapon_id):
         """
         Called when number key is pressed
         """
         if weapon_id not in WEAPON_BUTTONS:
             return
-        if WEAPON_BUTTONS[weapon_id] == self.current_weapon:
+        weapon = WEAPON_BUTTONS[weapon_id]
+        if weapon not in self.inventory:
             return
-        self.selected_weapon = WEAPON_BUTTONS[weapon_id]
+        if weapon == self.current_weapon:
+            return
+        self.selected_weapon = weapon
 
 def check_segment(segment):
     if segment.back_sector is None:

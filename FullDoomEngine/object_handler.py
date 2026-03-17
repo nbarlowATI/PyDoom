@@ -2,8 +2,9 @@ import pygame as pg
 from pygame.math import Vector2 as vec2
 import clevercsv
 
-from collectible import Collectible
-from ornament import Ornament
+from collectible import Collectible, WeaponPickup
+from doomsettings import WEAPON_CLASS_MAP
+from ornament import Ornament, ExplodingBarrel
 from npc import NPC, ZombieMan, ShotgunGuy, Imp
 
 class ObjectHandler:
@@ -11,6 +12,7 @@ class ObjectHandler:
         self.engine = engine
         self.npcs = []
         self.objects = []
+        self.projectiles = []
 
 
     def add_objects_npcs(self, difficulty):
@@ -72,10 +74,16 @@ class ObjectHandler:
             self.npcs.append(Imp(self.engine, thing.pos, thing.angle))
 
     def add_collectible(self, thing, thing_info):
-        self.objects.append(Collectible(self.engine, thing.pos, thing.angle, thing_info))
+        if thing_info["class"] in WEAPON_CLASS_MAP:
+            self.objects.append(WeaponPickup(self.engine, thing.pos, thing.angle, thing_info))
+        else:
+            self.objects.append(Collectible(self.engine, thing.pos, thing.angle, thing_info))
 
     def add_ornament(self, thing, thing_info):
-        self.objects.append(Ornament(self.engine, thing.pos, thing.angle, thing_info))
+        if thing_info["class"] == "ExplodingBarrel":
+            self.objects.append(ExplodingBarrel(self.engine, thing.pos, thing.angle, thing_info))
+        else:
+            self.objects.append(Ornament(self.engine, thing.pos, thing.angle, thing_info))
 
 
     def update(self):
@@ -84,5 +92,9 @@ class ObjectHandler:
 
         for object in self.objects:
             object.update()
+
+        for projectile in self.projectiles:
+            projectile.update()
+        self.projectiles = [p for p in self.projectiles if p.exists]
 
 
