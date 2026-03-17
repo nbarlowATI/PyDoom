@@ -155,28 +155,32 @@ class Player:
     # * slide along wall, if movement is at an angle to non-traversible segment.
     def handle_collision(self, movement, collision_segs):
         pos = self.pos
+        # First pass: if any door seg is open, movement goes through immediately.
+        for collision_seg in collision_segs:
+            if check_segment(collision_seg) != WALL_TYPE.DOOR:
+                continue
+            if collision_seg.linedef_id in self.engine.doors:
+                door = self.engine.doors[collision_seg.linedef_id]
+                if door.is_open or door.is_opening:
+                    return pos + movement
+            else:
+                # Door not yet registered — allow passage if ceiling clearance is enough.
+                back = collision_seg.back_sector
+                if back and (back.ceil_height - back.floor_height) > MIN_ROOM_HEIGHT:
+                    return pos + movement
+        # Second pass: apply wall physics for everything else.
         for collision_seg in collision_segs:
             wall_type = check_segment(collision_seg)
             if wall_type == WALL_TYPE.PASSABLE:
                 pos += movement
             elif wall_type == WALL_TYPE.DOOR:
-                if collision_seg.linedef_id in self.engine.doors:
-                    door = self.engine.doors[collision_seg.linedef_id]
-                    if door.is_open or door.is_opening:
-                        # door is open
-                        pos += movement
-                        return pos
-                else:
-                    pass
+                pass  # Closed door — treat as solid
             elif wall_type == WALL_TYPE.SOLID_WALL:
                 wall_vec = collision_seg.start_vertex - collision_seg.end_vertex
                 wall_vec_norm = wall_vec / wall_vec.magnitude()
                 dot_product = movement.dot(wall_vec_norm)
                 pos += dot_product * wall_vec_norm
-
             elif wall_type == WALL_TYPE.IMPASSABLE:
-                # likely a passable wall behind - just break out of the loop
-                # rather than trying to figure out how to slide.
                 return pos
         return pos
 
